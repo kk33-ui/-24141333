@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>红色传承 - 红色足迹闯关H5</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap');
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background: linear-gradient(135deg, #1a0a0a 0%, #2d0a0a 50%, #1a0505 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .chapter-title {
+            font-family: 'Noto Serif SC', serif;
+            font-weight: 900;
+        }
+
+        /* 红色主题渐变 */
+        .red-gradient {
+            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%);
+        }
+
+        /* 红绸带效果 */
+        .red-ribbon {
+            position: relative;
+        }
+
+        .red-ribbon::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M0,50 Q25,25 50,50 T100,50" stroke="%23c41e3a" fill="none" stroke-width="2"/></svg>') repeat-x;
+            opacity: 0.1;
+            z-index: -1;
+        }
+
+        /* 五角星动画 */
+        .star-twinkle {
+            animation: twinkle 2s ease-in-out infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.1); }
+        }
+
+        /* 红绸飘动 */
+        .silk-wave {
+            animation: silkWave 3s ease-in-out infinite;
+        }
+
+        @keyframes silkWave {
+            0%, 100% { transform: translateX(0) rotate(0deg); }
+            25% { transform: translateX(5px) rotate(2deg); }
+            75% { transform: translateX(-5px) rotate(-2deg); }
+        }
+
+        /* 章节切换动画 */
+        .chapter-enter-active {
+            animation: chapterIn 0.8s ease-out;
+        }
+
+        @keyframes chapterIn {
+            from {
+                opacity: 0;
+                transform: translateY(50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* 留言条目 */
+        .honor-item {
+            transition: all 0.3s ease;
+        }
+
+        .honor-item:hover {
+            transform: translateX(10px);
+            background: rgba(196, 30, 58, 0.2);
+        }
+
+        /* 长按提示 */
+        .long-press-hint {
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* 问答选项 */
+        .option-btn {
+            transition: all 0.3s ease;
+        }
+
+        .option-btn.selected {
+            background: linear-gradient(135deg, #c41e3a, #8b0000) !important;
+            border-color: #ffd700 !important;
+            transform: scale(1.02);
+        }
+
+        .option-btn.correct {
+            background: linear-gradient(135deg, #22c55e, #16a34a) !important;
+        }
+
+        .option-btn.wrong {
+            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+        }
+
+        /* 证书样式 */
+        .certificate {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            color: #1a0a0a;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .certificate::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: repeating-linear-gradient(
+                90deg,
+                #c41e3a 0px,
+                #c41e3a 20px,
+                #ffd700 20px,
+                #ffd700 40px
+            );
+        }
+
+        /* 地图标记 */
+        .map-marker {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .map-marker:hover {
+            transform: scale(1.2);
+        }
+
+        .map-marker.unlocked {
+            filter: drop-shadow(0 0 10px #ffd700);
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #c41e3a, #ffd700);
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+
+        /* 滚动隐藏 */
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* 红色光晕 */
+        .red-glow {
+            box-shadow: 0 0 30px rgba(196, 30, 58, 0.5);
+        }
+
+        /* 纸质纹理 */
+        .paper-texture {
+            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23fff5e6" width="100" height="100"/><circle fill="%23ffd4a3" cx="25" cy="25" r="1" opacity="0.3"/><circle fill="%23ffd4a3" cx="75" cy="75" r="1" opacity="0.3"/></svg>');
+            background-size: 100px 100px;
+        }
+
+        /* 章节导航 */
+        .chapter-nav {
+            position: fixed;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .chapter-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .chapter-dot.active {
+            width: 40px;
+            border-radius: 10px;
+            background: #c41e3a;
+        }
+
+        .chapter-dot.completed {
+            background: #22c55e;
+        }
+
+        /* 压力进度 */
+        .press-progress {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            overflow: hidden;
+            height: 20px;
+        }
+
+        .press-fill {
+            background: linear-gradient(90deg, #c41e3a, #ffd700);
+            height: 100%;
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 章节导航 -->
+        <div class="chapter-nav" v-if="currentChapter > 0 && currentChapter < 7">
+            <div
+                v-for="chapter in 6"
+                :key="chapter"
+                class="chapter-dot"
+                :class="{ active: currentChapter === chapter, completed: completedChapters.includes(chapter) }"
+                @click="scrollToChapter(chapter)"
+            ></div>
+        </div>
+
+        <!-- 封面 -->
+        <section v-if="currentChapter === 0" class="min-h-screen flex flex-col items-center justify-center p-8 relative overflow-hidden">
+            <!-- 背景装饰 -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-10 left-10 text-6xl star-twinkle" style="animation-delay: 0s;">★</div>
+                <div class="absolute top-20 right-20 text-4xl star-twinkle" style="animation-delay: 0.5s;">★</div>
+                <div class="absolute bottom-20 left-20 text-5xl star-twinkle" style="animation-delay: 1s;">★</div>
+                <div class="absolute bottom-10 right-10 text-4xl star-twinkle" style="animation-delay: 1.5s;">★</div>
+            </div>
+
+            <!-- 红绸装饰 -->
+            <div class="absolute top-0 left-0 w-full h-2 red-gradient"></div>
+            <div class="absolute bottom-0 left-0 w-full h-2 red-gradient"></div>
+
+            <!-- 主内容 -->
+            <div class="text-center z-10">
+                <!-- 标题 -->
+                <div class="mb-8">
+                    <div class="text-5xl md:text-7xl font-black text-red-600 mb-4 silk-wave">红色传承</div>
+                    <div class="text-2xl md:text-3xl text-yellow-500 chapter-title">红色足迹闯关</div>
+                </div>
+
+                <!-- 徽章 -->
+                <div class="w-32 h-32 mx-auto mb-8 relative">
+                    <div class="absolute inset-0 red-gradient rounded-full opacity-20 animate-ping"></div>
+                    <div class="relative w-full h-full red-gradient rounded-full flex items-center justify-center red-glow">
+                        <svg class="w-16 h-16 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- 开始按钮 -->
+                <button
+                    @click="startJourney"
+                    class="red-gradient text-white px-12 py-4 rounded-full text-xl font-bold long-press-hint red-glow hover:scale-105 transition-transform"
+                >
+                    开始红色之旅
+                </button>
+
+                <!-- 说明 -->
+                <p class="mt-8 text-white/60 text-sm">闯关探索 · 学习知识 · 留言致敬 · 获得证书</p>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="absolute bottom-10 left-0 right-0 flex justify-center gap-8 text-center">
+                <div>
+                    <div class="text-2xl font-bold text-yellow-500">{{ honorCount }}</div>
+                    <div class="text-xs text-white/60">致敬人数</div>
+                </div>
+                <div>
+                    <div class="text-2xl font-bold text-yellow-500">{{ oathCount }}</div>
+                    <div class="text-xs text-white/60">宣誓人数</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第一章：红色地图 -->
+        <section v-if="currentChapter === 1" class="min-h-screen p-6 chapter-enter-active">
+            <div class="max-w-lg mx-auto">
+                <!-- 标题 -->
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-black text-yellow-500 chapter-title">第一章</h2>
+                    <p class="text-xl text-red-400">红色足迹地图</p>
+                    <p class="text-white/60 text-sm mt-2">探索中国革命历史的重要地点</p>
+                </div>
+
+                <!-- 地图 -->
+                <div class="relative bg-gradient-to-br from-green-900/30 to-green-800/30 rounded-3xl p-8 min-h-[500px] border border-green-700/30">
+                    <!-- 中国地图简化版 -->
+                    <svg viewBox="0 0 400 500" class="w-full h-auto">
+                        <!-- 地图轮廓 -->
+                        <path d="M100,50 L300,50 L350,150 L320,300 L250,450 L150,450 L50,300 L80,150 Z" fill="rgba(34,197,94,0.2)" stroke="#22c55e" stroke-width="2"/>
+
+                        <!-- 红色地点标记 -->
+                        <!-- 嘉兴南湖 -->
+                        <circle
+                            cx="250"
+                            cy="200"
+                            r="12"
+                            :fill="meetingItems.jiaxing.unlocked ? '#ffd700' : '#666'"
+                            class="map-marker"
+                            :class="{ unlocked: meetingItems.jiaxing.unlocked }"
+                            @click="showMarkerDetail('jiaxing')"
+                        />
+                        <text x="250" y="235" text-anchor="middle" fill="white" font-size="12">嘉兴南湖</text>
+
+                        <!-- 井冈山 -->
+                        <circle
+                            cx="200"
+                            cy="280"
+                            r="12"
+                            :fill="meetingItems.jinggangshan.unlocked ? '#ffd700' : '#666'"
+                            class="map-marker"
+                            :class="{ unlocked: meetingItems.jinggangshan.unlocked }"
+                            @click="showMarkerDetail('jinggangshan')"
+                        />
+                        <text x="200" y="315" text-anchor="middle" fill="white" font-size="12">井冈山</text>
+
+                        <!-- 遵义 -->
+                        <circle
+                            cx="180"
+                            cy="320"
+                            r="12"
+                            :fill="meetingItems.zunyi.unlocked ? '#ffd700' : '#666'"
+                            class="map-marker"
+                            :class="{ unlocked: meetingItems.zunyi.unlocked }"
+                            @click="showMarkerDetail('zunyi')"
+                        />
+                        <text x="180" y="355" text-anchor="middle" fill="white" font-size="12">遵义</text>
+
+                        <!-- 延安 -->
+                        <circle
+                            cx="200"
+                            cy="200"
+                            r="12"
+                            :fill="meetingItems.yan'an.unlocked ? '#ffd700' : '#666'"
+                            class="map-marker"
+                            :class="{ unlocked: meetingItems.yan'an.unlocked }"
+                            @click="showMarkerDetail('yan'an')"
+                        />
+                        <text x="235" y="205" text-anchor="start" fill="white" font-size="12">延安</text>
+
+                        <!-- 西柏坡 -->
+                        <circle
+                            cx="230"
+                            cy="150"
+                            r="12"
+                            :fill="meetingItems.xibaipo.unlocked ? '#ffd700' : '#666'"
+                            class="map-marker"
+                            :class="{ unlocked: meetingItems.xibaipo.unlocked }"
+                            @click="showMarkerDetail('xibaipo')"
+                        />
+                        <text x="265" y="155" text-anchor="start" fill="white" font-size="12">西柏坡</text>
+                    </svg>
+
+                    <!-- 进度提示 -->
+                    <div class="absolute bottom-4 left-4 right-4 bg-black/50 rounded-xl p-4">
+                        <div class="flex justify-between text-sm mb-2">
+                            <span>探索进度</span>
+                            <span>{{ unlockedCount }}/5</span>
+                        </div>
+                        <div class="progress-bar h-2">
+                            <div class="progress-fill" :style="{ width: (unlockedCount / 5 * 100) + '%' }"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 详情弹窗 -->
+                <div v-if="currentMeetingDetail" class="fixed inset-0 bg-black/80 flex items-center justify-center p-6 z-50" @click.self="currentMeetingDetail = null">
+                    <div class="bg-gradient-to-br from-red-900/90 to-red-800/90 rounded-3xl p-8 max-w-md w-full border-2 border-yellow-500">
+                        <h3 class="text-2xl font-bold text-yellow-500 mb-4">{{ currentMeetingDetail.name }}</h3>
+                        <p class="text-white/90 mb-6 leading-relaxed">{{ currentMeetingDetail.description }}</p>
+                        <div class="text-sm text-yellow-400 mb-6">
+                            <span class="font-bold">历史意义：</span>{{ currentMeetingDetail.significance }}
+                        </div>
+                        <div v-if="!currentMeetingDetail.unlocked" class="text-center">
+                            <p class="text-white/60 mb-4">长按3秒解锁这个红色足迹</p>
+                            <div class="press-progress mb-4">
+                                <div class="press-fill" :style="{ width: pressProgress + '%' }"></div>
+                            </div>
+                            <button
+                                @touchstart="handleLongPressStart(currentMeetingDetail.id)"
+                                @touchend="handleLongPressEnd"
+                                @mousedown="handleLongPressStart(currentMeetingDetail.id)"
+                                @mouseup="handleLongPressEnd"
+                                class="w-full red-gradient text-white py-3 rounded-xl font-bold"
+                            >
+                                按住解锁
+                            </button>
+                        </div>
+                        <div v-else class="text-center">
+                            <p class="text-green-400 mb-4">✓ 已解锁</p>
+                            <button @click="currentMeetingDetail = null" class="w-full bg-white/20 text-white py-3 rounded-xl font-bold">关闭</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 下一章按钮 -->
+                <button
+                    v-if="unlockedCount >= 5"
+                    @click="nextChapter"
+                    class="w-full mt-6 red-gradient text-white py-4 rounded-xl font-bold text-lg"
+                >
+                    进入下一章 →
+                </button>
+            </div>
+        </section>
+
+        <!-- 第二章：知识问答 -->
+        <section v-if="currentChapter === 2" class="min-h-screen p-6 chapter-enter-active">
+            <div class="max-w-lg mx-auto">
+                <!-- 标题 -->
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-black text-yellow-500 chapter-title">第二章</h2>
+                    <p class="text-xl text-red-400">红色知识挑战</p>
+                </div>
+
+                <!-- 进度 -->
+                <div class="bg-white/10 rounded-xl p-4 mb-6">
+                    <div class="flex justify-between text-sm mb-2">
+                        <span>答题进度</span>
+                        <span>{{ currentQuestionIndex + 1 }}/{{ questionList.length }}</span>
+                    </div>
+                    <div class="progress-bar h-2">
+                        <div class="progress-fill" :style="{ width: ((currentQuestionIndex + 1) / questionList.length * 100) + '%' }"></div>
+                    </div>
+                </div>
+
+                <!-- 题目 -->
+                <div v-if="currentQuestion" class="bg-white/10 rounded-3xl p-8 mb-6">
+                    <h3 class="text-xl font-bold mb-8">{{ currentQuestion.question }}</h3>
+
+                    <!-- 选项 -->
+                    <div class="space-y-4">
+                        <button
+                            v-for="(option, index) in currentQuestion.options"
+                            :key="index"
+                            @click="selectOption(index)"
+                            :disabled="questionAnswered"
+                            class="option-btn w-full p-4 rounded-xl border-2 border-white/20 text-left transition-all"
+                            :class="{
+                                selected: selectedOption === index,
+                                correct: questionAnswered && index === currentQuestion.correct,
+                                wrong: questionAnswered && selectedOption === index && index !== currentQuestion.correct
+                            }"
+                        >
+                            <span class="font-bold mr-2">{{ ['A', 'B', 'C', 'D'][index] }}.</span>
+                            {{ option }}
+                        </button>
+                    </div>
+
+                    <!-- 答案反馈 -->
+                    <div v-if="questionAnswered" class="mt-6 p-4 rounded-xl" :class="selectedOption === currentQuestion.correct ? 'bg-green-500/20' : 'bg-red-500/20'">
+                        <p class="font-bold" :class="selectedOption === currentQuestion.correct ? 'text-green-400' : 'text-red-400'">
+                            {{ selectedOption === currentQuestion.correct ? '✓ 回答正确！' : '✗ 回答错误' }}
+                        </p>
+                        <p class="text-white/80 mt-2">{{ currentQuestion.explanation }}</p>
+                    </div>
+
+                    <!-- 下一题按钮 -->
+                    <button
+                        v-if="questionAnswered"
+                        @click="nextQuestion"
+                        class="w-full mt-6 red-gradient text-white py-4 rounded-xl font-bold"
+                    >
+                        {{ currentQuestionIndex < questionList.length - 1 ? '下一题' : '完成挑战' }}
+                    </button>
+                </div>
+
+                <!-- 完成状态 -->
+                <div v-if="currentQuestionIndex >= questionList.length" class="text-center">
+                    <div class="text-6xl mb-4">🎉</div>
+                    <h3 class="text-2xl font-bold text-yellow-500 mb-4">挑战完成！</h3>
+                    <p class="text-white/80 mb-8">
+                        你答对了 {{ score }}/{{ questionList.length }} 道题目
+                    </p>
+                    <div class="bg-white/10 rounded-xl p-6 mb-8">
+                        <p class="text-yellow-400 font-bold mb-2">最终得分</p>
+                        <p class="text-5xl font-black text-yellow-500">{{ score }}</p>
+                    </div>
+                    <button @click="nextChapter" class="w-full red-gradient text-white py-4 rounded-xl font-bold text-lg">
+                        进入下一章 →
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第三章：致敬留言 -->
+        <section v-if="currentChapter === 3" class="min-h-screen p-6 chapter-enter-active">
+            <div class="max-w-lg mx-auto">
+                <!-- 标题 -->
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-black text-yellow-500 chapter-title">第三章</h2>
+                    <p class="text-xl text-red-400">致敬英烈</p>
+                    <p class="text-white/60 text-sm mt-2">已有 {{ honorCount }} 人参与致敬</p>
+                </div>
+
+                <!-- 留言输入 -->
+                <div class="bg-white/10 rounded-3xl p-6 mb-6">
+                    <h3 class="text-lg font-bold mb-4">留下你的致敬</h3>
+                    <textarea
+                        v-model="honorText"
+                        placeholder="向革命先烈致敬..."
+                        class="w-full bg-black/30 border border-white/20 rounded-xl p-4 text-white placeholder-white/40 resize-none h-24 focus:outline-none focus:border-red-500"
+                    ></textarea>
+                    <button
+                        @click="submitHonor"
+                        :disabled="!honorText.trim()"
+                        class="w-full mt-4 red-gradient text-white py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        提交致敬
+                    </button>
+                </div>
+
+                <!-- 留言列表 -->
+                <div class="space-y-4 max-h-[400px] overflow-y-auto hide-scrollbar">
+                    <div
+                        v-for="honor in honorList"
+                        :key="honor.id"
+                        class="honor-item bg-white/5 rounded-xl p-4 border-l-4 border-red-600"
+                    >
+                        <p class="text-white/90">{{ honor.content }}</p>
+                        <p class="text-white/40 text-xs mt-2">{{ formatTime(honor.created_at) }}</p>
+                    </div>
+                </div>
+
+                <!-- 下一章按钮 -->
+                <button
+                    v-if="hasSubmittedHonor"
+                    @click="nextChapter"
+                    class="w-full mt-6 red-gradient text-white py-4 rounded-xl font-bold text-lg"
+                >
+                    进入下一章 →
+                </button>
+            </div>
+        </section>
+
+        <!-- 第四章：宣誓 -->
+        <section v-if="currentChapter === 4" class="min-h-screen p-6 chapter-enter-active">
+            <div class="max-w-lg mx-auto">
+                <!-- 标题 -->
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-black text-yellow-500 chapter-title">第四章</h2>
+                    <p class="text-xl text-red-400">庄严宣誓</p>
+                    <p class="text-white/60 text-sm mt-2">已有 {{ oathCount }} 人参与宣誓</p>
+                </div>
+
+                <!-- 宣誓内容 -->
+                <div class="bg-gradient-to-br from-red-900/50 to-red-800/50 rounded-3xl p-8 mb-6 border-2 border-yellow-500">
+                    <div class="text-center mb-6">
+                        <div class="w-20 h-20 mx-auto mb-4 red-gradient rounded-full flex items-center justify-center">
+                            <svg class="w-10 h-10 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold text-yellow-500">我宣誓</h3>
+                    </div>
+
+                    <div class="text-lg leading-loose text-white/90 text-center">
+                        <p>我志愿成为</p>
+                        <p class="text-yellow-400 font-bold text-2xl my-4">红色传承者</p>
+                        <p>传承红色基因</p>
+                        <p>赓续红色血脉</p>
+                        <p>坚定理想信念</p>
+                        <p>为实现中华民族伟大复兴</p>
+                        <p>贡献青春力量！</p>
+                    </div>
+                </div>
+
+                <!-- 宣誓按钮 -->
+                <button
+                    v-if="!hasTakenOath"
+                    @click="takeOath"
+                    class="w-full red-gradient text-white py-4 rounded-xl font-bold text-lg mb-4 red-glow"
+                >
+                    我宣誓
+                </button>
+
+                <!-- 已宣誓状态 -->
+                <div v-else class="text-center bg-green-500/20 rounded-xl p-6 mb-4">
+                    <p class="text-green-400 font-bold text-xl mb-2">✓ 宣誓完成</p>
+                    <p class="text-white/60">感谢你的庄严承诺</p>
+                </div>
+
+                <!-- 统计 -->
+                <div class="bg-white/10 rounded-xl p-6 text-center mb-6">
+                    <p class="text-yellow-400 font-bold mb-2">全国宣誓人数</p>
+                    <p class="text-4xl font-black text-yellow-500">{{ oathCount }}</p>
+                </div>
+
+                <!-- 下一章按钮 -->
+                <button
+                    v-if="hasTakenOath"
+                    @click="nextChapter"
+                    class="w-full red-gradient text-white py-4 rounded-xl font-bold text-lg"
+                >
+                    进入下一章 →
+                </button>
+            </div>
+        </section>
+
+        <!-- 第五章：证书 -->
+        <section v-if="currentChapter === 5" class="min-h-screen p-6 chapter-enter-active">
+            <div class="max-w-lg mx-auto">
+                <!-- 标题 -->
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-black text-yellow-500 chapter-title">第五章</h2>
+                    <p class="text-xl text-red-400">荣誉证书</p>
+                </div>
+
+                <!-- 证书预览 -->
+                <div
+                    ref="certificateRef"
+                    class="certificate rounded-3xl p-8 mb-6 paper-texture"
+                >
+                    <div class="text-center">
+                        <!-- 装饰 -->
+                        <div class="flex justify-center mb-4">
+                            <div class="text-4xl">★</div>
+                        </div>
+
+                        <!-- 标题 -->
+                        <h3 class="text-3xl font-black text-red-700 mb-2">荣誉证书</h3>
+                        <p class="text-gray-600 mb-6">CERTIFICATE OF HONOR</p>
+
+                        <!-- 内容 -->
+                        <div class="mb-6">
+                            <p class="text-gray-700 mb-2">特颁发给</p>
+                            <p class="text-2xl font-bold text-red-600">红色传承者</p>
+                        </div>
+
+                        <div class="text-gray-700 leading-relaxed mb-6">
+                            <p>以表彰您在"红色足迹闯关"活动中</p>
+                            <p>认真学习红色历史</p>
+                            <p>传承红色精神</p>
+                            <p>完成全部挑战</p>
+                        </div>
+
+                        <!-- 成绩 -->
+                        <div class="bg-white/50 rounded-xl p-4 mb-6">
+                            <div class="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <p class="text-2xl font-bold text-red-600">{{ score }}</p>
+                                    <p class="text-xs text-gray-600">知识得分</p>
+                                </div>
+                                <div>
+                                    <p class="text-2xl font-bold text-red-600">5</p>
+                                    <p class="text-xs text-gray-600">足迹解锁</p>
+                                </div>
+                                <div>
+                                    <p class="text-2xl font-bold text-red-600">✓</p>
+                                    <p class="text-xs text-gray-600">庄严宣誓</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 日期和编号 -->
+                        <div class="flex justify-between text-sm text-gray-600">
+                            <p>编号：RH-{{ certificateNumber }}</p>
+                            <p>{{ currentDate }}</p>
+                        </div>
+
+                        <!-- 底部装饰 -->
+                        <div class="mt-6 flex justify-center">
+                            <div class="text-2xl">★ ★ ★</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="space-y-4">
+                    <button
+                        @click="downloadCertificate"
+                        class="w-full red-gradient text-white py-4 rounded-xl font-bold text-lg"
+                    >
+                        📥 保存证书
+                    </button>
+                    <button
+                        @click="shareCertificate"
+                        class="w-full bg-white/20 text-white py-4 rounded-xl font-bold"
+                    >
+                        📤 分享证书
+                    </button>
+                    <button
+                        @click="nextChapter"
+                        class="w-full bg-yellow-500 text-black py-4 rounded-xl font-bold text-lg"
+                    >
+                        完成挑战 →
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 第六章：完成 -->
+        <section v-if="currentChapter === 6" class="min-h-screen p-6 chapter-enter-active">
+            <div class="max-w-lg mx-auto text-center">
+                <!-- 庆祝动画 -->
+                <div class="text-8xl mb-8">🏆</div>
+
+                <!-- 标题 -->
+                <h2 class="text-4xl font-black text-yellow-500 chapter-title mb-4">挑战完成！</h2>
+                <p class="text-white/80 mb-12">感谢你完成红色传承之旅</p>
+
+                <!-- 最终统计 -->
+                <div class="bg-white/10 rounded-3xl p-8 mb-8">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <p class="text-4xl font-black text-yellow-500">{{ honorCount }}</p>
+                            <p class="text-white/60 text-sm">致敬人数</p>
+                        </div>
+                        <div>
+                            <p class="text-4xl font-black text-yellow-500">{{ oathCount }}</p>
+                            <p class="text-white/60 text-sm">宣誓人数</p>
+                        </div>
+                        <div>
+                            <p class="text-4xl font-black text-yellow-500">{{ score }}</p>
+                            <p class="text-white/60 text-sm">知识得分</p>
+                        </div>
+                        <div>
+                            <p class="text-4xl font-black text-yellow-500">100%</p>
+                            <p class="text-white/60 text-sm">完成度</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 分享 -->
+                <div class="space-y-4">
+                    <button
+                        @click="shareResult"
+                        class="w-full red-gradient text-white py-4 rounded-xl font-bold text-lg"
+                    >
+                        📤 分享成果
+                    </button>
+                    <button
+                        @click="location.reload()"
+                        class="w-full bg-white/20 text-white py-4 rounded-xl font-bold"
+                    >
+                        🔄 重新挑战
+                    </button>
+                </div>
+
+                <!-- 页脚 -->
+                <div class="mt-12 text-white/40 text-sm">
+                    <p>红色传承 · 红色足迹闯关</p>
+                    <p class="mt-2">传承红色基因 赓续红色血脉</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const { createApp, ref, computed, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                // 状态管理
+                const currentChapter = ref(0);
+                const completedChapters = ref([]);
+                const honorCount = ref(12847);
+                const oathCount = ref(9562);
+                const honorText = ref('');
+                const hasSubmittedHonor = ref(false);
+                const hasTakenOath = ref(false);
+                const honorList = ref([]);
+                const score = ref(0);
+
+                // 第一章：红色足迹
+                const meetingItems = ref({
+                    jiaxing: {
+                        id: 'jiaxing',
+                        name: '嘉兴南湖',
+                        description: '1921年7月，中共一大在上海召开，后转移至嘉兴南湖的一艘红船上继续召开。',
+                        significance: '中国共产党成立的地方，中国共产党的诞生地。',
+                        unlocked: false
+                    },
+                    jinggangshan: {
+                        id: 'jinggangshan',
+                        name: '井冈山',
+                        description: '1927年10月，毛泽东率领秋收起义部队到达井冈山，创建了中国第一个农村革命根据地。',
+                        significance: '中国革命的摇篮，开辟了"农村包围城市"的道路。',
+                        unlocked: false
+                    },
+                    zunyi: {
+                        id: 'zunyi',
+                        name: '遵义',
+                        description: '1935年1月，中共中央在遵义召开政治局扩大会议，确立了毛泽东在党中央和红军的领导地位。',
+                        significance: '挽救了党、挽救了红军、挽救了中国革命，是党的历史上一个生死攸关的转折点。',
+                        unlocked: false
+                    },
+                    'yan\'an': {
+                        id: 'yan\'an',
+                        name: '延安',
+                        description: '1935年10月，中央红军到达陕北，延安成为党中央的所在地，长达13年。',
+                        significance: '中国革命的指导中心和战略总后方，培育了伟大的延安精神。',
+                        unlocked: false
+                    },
+                    xibaipo: {
+                        id: 'xibaipo',
+                        name: '西柏坡',
+                        description: '1948年5月至1949年3月，中共中央在西柏坡指挥了辽沈、淮海、平津三大战役。',
+                        significance: '解放全中国的最后一个农村指挥所，"两个务必"的诞生地。',
+                        unlocked: false
+                    }
+                });
+
+                const currentMeetingDetail = ref(null);
+                const pressProgress = ref(0);
+                const pressTimer = ref(null);
+
+                // 第二章：知识问答
+                const questionList = ref([
+                    {
+                        question: '中国共产党是什么时候成立的？',
+                        options: ['1919年', '1920年', '1921年', '1922年'],
+                        correct: 2,
+                        explanation: '1921年7月，中国共产党第一次全国代表大会在上海召开，标志着中国共产党正式成立。'
+                    },
+                    {
+                        question: '井冈山革命根据地是中国革命的哪个地方？',
+                        options: ['发源地', '摇篮', '终点', '中心'],
+                        correct: 1,
+                        explanation: '井冈山是中国革命的摇篮，开辟了"农村包围城市、武装夺取政权"的道路。'
+                    },
+                    {
+                        question: '遵义会议的历史意义是什么？',
+                        options: ['宣告红军成立', '确立了毛泽东领导地位', '决定长征', '建立新中国'],
+                        correct: 1,
+                        explanation: '遵义会议确立了毛泽东在党中央和红军的领导地位，挽救了党、挽救了红军、挽救了中国革命。'
+                    },
+                    {
+                        question: '延安精神的核心是什么？',
+                        options: ['自力更生、艰苦奋斗', '团结互助', '英勇无畏', '无私奉献'],
+                        correct: 0,
+                        explanation: '延安精神的核心是自力更生、艰苦奋斗，全心全意为人民服务。'
+                    },
+                    {
+                        question: '"两个务必"是在哪里提出的？',
+                        options: ['延安', '西柏坡', '遵义', '井冈山'],
+                        correct: 1,
+                        explanation: '1949年3月，党的七届二中全会在西柏坡召开，毛泽东提出了"两个务必"的要求。'
+                    }
+                ]);
+
+                const currentQuestionIndex = ref(0);
+                const selectedOption = ref(null);
+                const questionAnswered = ref(false);
+
+                // 计算属性
+                const currentQuestion = computed(() => {
+                    return questionList.value[currentQuestionIndex.value] || null;
+                });
+
+                const unlockedCount = computed(() => {
+                    return Object.values(meetingItems.value).filter(item => item.unlocked).length;
+                });
+
+                const certificateNumber = ref('');
+                const currentDate = ref('');
+                const certificateRef = ref(null);
+
+                // 方法
+                const startJourney = () => {
+                    currentChapter.value = 1;
+                    gsap.from('.chapter-enter-active', {
+                        opacity: 0,
+                        y: 50,
+                        duration: 0.8
+                    });
+                };
+
+                const nextChapter = () => {
+                    completedChapters.value.push(currentChapter.value);
+                    currentChapter.value++;
+                    gsap.from('.chapter-enter-active', {
+                        opacity: 0,
+                        y: 50,
+                        duration: 0.8
+                    });
+                };
+
+                const scrollToChapter = (chapter) => {
+                    currentChapter.value = chapter;
+                };
+
+                const showMarkerDetail = (itemId) => {
+                    currentMeetingDetail.value = meetingItems.value[itemId];
+                };
+
+                const handleLongPressStart = (itemId) => {
+                    if (meetingItems.value[itemId].unlocked) return;
+
+                    pressProgress.value = 0;
+                    const interval = 100;
+                    const duration = 3000;
+                    const increment = (interval / duration) * 100;
+
+                    pressTimer.value = setInterval(() => {
+                        pressProgress.value += increment;
+                        if (pressProgress.value >= 100) {
+                            clearInterval(pressTimer.value);
+                            unlockMeetingItem(itemId);
+                        }
+                    }, interval);
+                };
+
+                const handleLongPressEnd = () => {
+                    if (pressTimer.value) {
+                        clearInterval(pressTimer.value);
+                        pressProgress.value = 0;
+                    }
+                };
+
+                const unlockMeetingItem = (itemId) => {
+                    meetingItems.value[itemId].unlocked = true;
+                    pressProgress.value = 0;
+                    honorCount.value++;
+
+                    // 提交到数据库（如果配置了）
+                    // submitHonorToDatabase(`解锁了${meetingItems.value[itemId].name}红色足迹`);
+                };
+
+                const selectOption = (index) => {
+                    if (questionAnswered.value) return;
+                    selectedOption.value = index;
+                    questionAnswered.value = true;
+
+                    if (index === currentQuestion.value.correct) {
+                        score.value++;
+                    }
+                };
+
+                const nextQuestion = () => {
+                    if (currentQuestionIndex.value < questionList.value.length - 1) {
+                        currentQuestionIndex.value++;
+                        selectedOption.value = null;
+                        questionAnswered.value = false;
+                    } else {
+                        // 完成所有题目
+                        generateCertificate();
+                    }
+                };
+
+                const submitHonor = () => {
+                    if (!honorText.value.trim()) return;
+
+                    const newHonor = {
+                        id: Date.now(),
+                        content: honorText.value,
+                        created_at: new Date().toISOString()
+                    };
+
+                    honorList.value.unshift(newHonor);
+                    honorCount.value++;
+                    hasSubmittedHonor.value = true;
+                    honorText.value = '';
+
+                    // 提交到数据库（如果配置了）
+                    // submitHonorToDatabase(newHonor.content);
+                };
+
+                const takeOath = () => {
+                    hasTakenOath.value = true;
+                    oathCount.value++;
+
+                    // 提交到数据库（如果配置了）
+                    // submitOathToDatabase();
+                };
+
+                const formatTime = (dateString) => {
+                    const date = new Date(dateString);
+                    const now = new Date();
+                    const diff = now - date;
+                    const minutes = Math.floor(diff / 60000);
+                    const hours = Math.floor(minutes / 60);
+                    const days = Math.floor(hours / 24);
+
+                    if (days > 0) return `${days}天前`;
+                    if (hours > 0) return `${hours}小时前`;
+                    if (minutes > 0) return `${minutes}分钟前`;
+                    return '刚刚';
+                };
+
+                const generateCertificate = () => {
+                    const timestamp = Date.now().toString(36).toUpperCase();
+                    certificateNumber.value = `RH-${timestamp}`;
+                    currentDate.value = new Date().toLocaleDateString('zh-CN');
+                };
+
+                const downloadCertificate = async () => {
+                    if (!certificateRef.value) return;
+
+                    try {
+                        const canvas = await html2canvas(certificateRef.value, {
+                            backgroundColor: '#fef3c7',
+                            scale: 2
+                        });
+
+                        const link = document.createElement('a');
+                        link.download = `红色传承证书-${certificateNumber.value}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                    } catch (error) {
+                        console.error('下载失败:', error);
+                        alert('下载失败，请截图保存');
+                    }
+                };
+
+                const shareCertificate = async () => {
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({
+                                title: '我的红色传承证书',
+                                text: `我完成了"红色足迹闯关"活动，获得了荣誉证书！编号：${certificateNumber.value}`,
+                                url: window.location.href
+                            });
+                        } catch (error) {
+                            console.log('分享取消');
+                        }
+                    } else {
+                        // 复制链接
+                        navigator.clipboard.writeText(window.location.href);
+                        alert('链接已复制到剪贴板！');
+                    }
+                };
+
+                const shareResult = async () => {
+                    const shareText = `我完成了"红色传承·红色足迹闯关"活动！\n知识得分：${score.value}分\n解锁足迹：5个\n参与致敬，庄严宣誓\n传承红色基因，赓续红色血脉！`;
+
+                    if (navigator.share) {
+                        try {
+                            await navigator.share({
+                                title: '红色传承挑战完成',
+                                text: shareText,
+                                url: window.location.href
+                            });
+                        } catch (error) {
+                            console.log('分享取消');
+                        }
+                    } else {
+                        navigator.clipboard.writeText(shareText);
+                        alert('成果已复制到剪贴板！');
+                    }
+                };
+
+                // 初始化
+                onMounted(() => {
+                    generateCertificate();
+
+                    // 模拟加载一些留言数据
+                    honorList.value = [
+                        { id: 1, content: '向革命先烈致敬！传承红色精神！', created_at: new Date(Date.now() - 3600000).toISOString() },
+                        { id: 2, content: '铭记历史，不忘初心！', created_at: new Date(Date.now() - 7200000).toISOString() },
+                        { id: 3, content: '红色基因代代传！', created_at: new Date(Date.now() - 10800000).toISOString() }
+                    ];
+
+                    // 从数据库加载数据（如果配置了）
+                    // loadHonorsFromDatabase();
+                });
+
+                return {
+                    currentChapter,
+                    completedChapters,
+                    honorCount,
+                    oathCount,
+                    honorText,
+                    hasSubmittedHonor,
+                    hasTakenOath,
+                    honorList,
+                    score,
+                    meetingItems,
+                    currentMeetingDetail,
+                    pressProgress,
+                    questionList,
+                    currentQuestionIndex,
+                    currentQuestion,
+                    selectedOption,
+                    questionAnswered,
+                    unlockedCount,
+                    certificateNumber,
+                    currentDate,
+                    certificateRef,
+                    startJourney,
+                    nextChapter,
+                    scrollToChapter,
+                    showMarkerDetail,
+                    handleLongPressStart,
+                    handleLongPressEnd,
+                    selectOption,
+                    nextQuestion,
+                    submitHonor,
+                    takeOath,
+                    formatTime,
+                    downloadCertificate,
+                    shareCertificate,
+                    shareResult
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
