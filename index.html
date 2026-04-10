@@ -3,15 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>红色传承 - 红色足迹闯关H5</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.2/dist/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.2/dist/axios.min.js"></script>
+    <title>国安在我心，青春共守护</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap');
+        :root {
+            --primary-red: #c41e3a;
+            --primary-gold: #ffd700;
+            --dark-bg: #0a0a0a;
+            --glass-bg: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
 
         * {
             margin: 0;
@@ -19,197 +20,865 @@
             box-sizing: border-box;
         }
 
+        html {
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: 'Noto Serif SC', serif;
-            background: linear-gradient(135deg, #1a0a0a 0%, #2d0a0a 50%, #1a0505 100%);
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--dark-bg);
             color: #fff;
-            min-height: 100vh;
-            overflow-x: hidden;
+            overflow: hidden;
+            height: 100vh;
+            perspective: 1000px;
         }
 
-        .chapter-title {
-            font-family: 'Noto Serif SC', serif;
-            font-weight: 900;
+        /* Loading Screen */
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a0505 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
         }
 
-        /* 红色主题渐变 */
-        .red-gradient {
-            background: linear-gradient(135deg, #c41e3a 0%, #8b0000 100%);
+        .loader.hidden {
+            opacity: 0;
+            visibility: hidden;
         }
 
-        .gold-gradient {
-            background: linear-gradient(135deg, #ffd700 0%, #ffb300 100%);
-        }
-
-        /* 红绸带效果 */
-        .red-ribbon {
+        .loader-shield {
+            width: 100px;
+            height: 120px;
             position: relative;
+            animation: shieldPulse 2s ease-in-out infinite;
         }
 
-        .red-ribbon::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            left: -10px;
-            right: -10px;
-            bottom: -10px;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><path d="M0,50 Q25,25 50,50 T100,50" stroke="%23c41e3a" fill="none" stroke-width="2"/></svg>') repeat-x;
-            opacity: 0.1;
-            z-index: -1;
+        @keyframes shieldPulse {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 20px rgba(196, 30, 58, 0.5)); }
+            50% { transform: scale(1.1); filter: drop-shadow(0 0 40px rgba(196, 30, 58, 0.8)); }
         }
 
-        /* 五角星动画 */
-        .star-twinkle {
-            animation: twinkle 2s ease-in-out infinite;
+        .loader-text {
+            margin-top: 30px;
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            letter-spacing: 5px;
         }
 
-        @keyframes twinkle {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.6; transform: scale(1.1); }
+        .loader-progress {
+            width: 200px;
+            height: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+            overflow: hidden;
         }
 
-        /* 红绸飘动 */
-        .silk-wave {
-            animation: silkWave 3s ease-in-out infinite;
+        .loader-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-gold));
+            width: 0%;
+            animation: loadingProgress 2s ease forwards;
         }
 
-        @keyframes silkWave {
-            0%, 100% { transform: translateX(0) rotate(0deg); }
-            25% { transform: translateX(5px) rotate(2deg); }
-            75% { transform: translateX(-5px) rotate(-2deg); }
+        @keyframes loadingProgress {
+            to { width: 100%; }
         }
 
-        /* 章节切换动画 */
-        .chapter-enter-active {
-            animation: chapterIn 0.8s ease-out;
-        }
-
-        @keyframes chapterIn {
-            from {
-                opacity: 0;
-                transform: translateY(50px) scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-        }
-
-        /* 留言条目 */
-        .honor-item {
-            transition: all 0.3s ease;
-        }
-
-        .honor-item:hover {
-            transform: translateX(10px);
-            background: rgba(196, 30, 58, 0.2);
-        }
-
-        /* 长按提示 */
-        .long-press-hint {
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        /* 问答选项 */
-        .option-btn {
-            transition: all 0.3s ease;
-        }
-
-        .option-btn.selected {
-            background: linear-gradient(135deg, #c41e3a, #8b0000) !important;
-            border-color: #ffd700 !important;
-            transform: scale(1.02);
-        }
-
-        .option-btn.correct {
-            background: linear-gradient(135deg, #22c55e, #16a34a) !important;
-        }
-
-        .option-btn.wrong {
-            background: linear-gradient(135deg, #ef4444, #dc2626) !important;
-        }
-
-        /* 证书样式 */
-        .certificate {
-            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
-            color: #1a0a0a;
+        /* Main Container */
+        .swiper-container {
+            width: 100%;
+            height: 100vh;
             position: relative;
             overflow: hidden;
         }
 
-        .certificate::before {
+        .swiper-wrapper {
+            display: flex;
+            transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1);
+            height: 100%;
+        }
+
+        .swiper-slide {
+            min-width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Particle Canvas */
+        #particleCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Slide 1 - Hero */
+        .slide-1 {
+            background: radial-gradient(ellipse at center bottom, #2d0a0a 0%, #0a0a0a 70%);
+        }
+
+        .hero-content {
+            text-align: center;
+            z-index: 10;
+            position: relative;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: linear-gradient(135deg, rgba(196, 30, 58, 0.3), rgba(139, 0, 0, 0.3));
+            border: 1px solid rgba(196, 30, 58, 0.5);
+            padding: 10px 25px;
+            border-radius: 50px;
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 3px;
+            margin-bottom: 40px;
+            animation: fadeInUp 1s ease 0.5s both;
+        }
+
+        .hero-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: var(--primary-gold);
+            border-radius: 50%;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
+        }
+
+        .hero-title {
+            font-size: clamp(40px, 12vw, 80px);
+            font-weight: 900;
+            line-height: 1.2;
+            margin-bottom: 20px;
+            animation: fadeInUp 1s ease 0.7s both;
+        }
+
+        .hero-title-line {
+            display: block;
+        }
+
+        .hero-title-line.main {
+            background: linear-gradient(135deg, #fff 0%, var(--primary-gold) 50%, #fff 100%);
+            background-size: 200% auto;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shine 3s linear infinite;
+        }
+
+        @keyframes shine {
+            to { background-position: 200% center; }
+        }
+
+        .hero-title-line.sub {
+            font-size: 0.5em;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: 15px;
+            font-weight: 300;
+        }
+
+        .hero-3d-shield {
+            width: 280px;
+            height: 320px;
+            margin: 50px auto;
+            position: relative;
+            animation: fadeInUp 1s ease 0.9s both;
+        }
+
+        .shield-3d {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d;
+            animation: rotate3d 8s ease-in-out infinite;
+        }
+
+        @keyframes rotate3d {
+            0%, 100% { transform: rotateY(-10deg) rotateX(5deg); }
+            50% { transform: rotateY(10deg) rotateX(-5deg); }
+        }
+
+        .shield-front, .shield-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+        }
+
+        .shield-front svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 30px 60px rgba(196, 30, 58, 0.4));
+        }
+
+        .shield-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(196, 30, 58, 0.3) 0%, transparent 50%);
+            animation: glowPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.5; }
+            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 15px;
+            background: linear-gradient(135deg, var(--primary-red), #8b0000);
+            color: #fff;
+            padding: 20px 50px;
+            border-radius: 60px;
+            font-size: 18px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            animation: fadeInUp 1s ease 1.1s both;
+            transition: all 0.3s ease;
+        }
+
+        .hero-cta:hover {
+            transform: scale(1.05);
+            box-shadow: 0 20px 50px rgba(196, 30, 58, 0.4);
+        }
+
+        .hero-cta::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: btnShine 2s infinite;
+        }
+
+        @keyframes btnShine {
+            to { left: 100%; }
+        }
+
+        .hero-hint {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 40px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 13px;
+            animation: fadeInUp 1s ease 1.3s both, bounce 2s ease-in-out infinite 2s;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Slide 2 - Timeline */
+        .slide-2 {
+            background: linear-gradient(180deg, #0a0a0a 0%, #0d1b2a 100%);
+        }
+
+        .slide-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 40px 20px;
+            z-index: 10;
+            position: relative;
+        }
+
+        .slide-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .slide-number {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.4);
+            letter-spacing: 5px;
+            margin-bottom: 15px;
+        }
+
+        .slide-title {
+            font-size: clamp(24px, 6vw, 36px);
+            font-weight: 800;
+            margin-bottom: 10px;
+        }
+
+        .slide-title .highlight {
+            color: var(--primary-red);
+            position: relative;
+        }
+
+        .slide-title .highlight::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-red), var(--primary-gold));
+        }
+
+        .timeline {
+            position: relative;
+            padding-left: 40px;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(180deg, var(--primary-red), var(--primary-gold), transparent);
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 40px;
+            opacity: 0;
+            transform: translateX(-30px);
+            transition: all 0.6s ease;
+        }
+
+        .timeline-item.visible {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: -34px;
+            top: 5px;
+            width: 14px;
+            height: 14px;
+            background: var(--dark-bg);
+            border: 3px solid var(--primary-red);
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .timeline-item:nth-child(2) .timeline-dot { border-color: #ff6b6b; }
+        .timeline-item:nth-child(3) .timeline-dot { border-color: var(--primary-gold); }
+
+        .timeline-year {
+            font-size: 14px;
+            color: var(--primary-gold);
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .timeline-content {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .timeline-content h4 {
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .timeline-content p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.8;
+        }
+
+        /* Slide 3 - Interactive Grid */
+        .slide-3 {
+            background: linear-gradient(180deg, #0d1b2a 0%, #1a0505 100%);
+        }
+
+        .security-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 30px;
+        }
+
+        .security-card {
+            aspect-ratio: 1;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .security-card::before {
             content: '';
             position: absolute;
             top: 0;
             left: 0;
             right: 0;
-            height: 8px;
-            background: repeating-linear-gradient(
-                90deg,
-                #c41e3a 0px,
-                #c41e3a 20px,
-                #ffd700 20px,
-                #ffd700 40px
-            );
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(196, 30, 58, 0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
-        /* 地图标记 */
-        .map-marker {
+        .security-card:hover {
+            transform: translateY(-10px) scale(1.05);
+            border-color: var(--primary-red);
+            box-shadow: 0 20px 40px rgba(196, 30, 58, 0.3);
+        }
+
+        .security-card:hover::before {
+            opacity: 1;
+        }
+
+        .security-card.active {
+            background: linear-gradient(135deg, rgba(196, 30, 58, 0.3), rgba(196, 30, 58, 0.1));
+            border-color: var(--primary-red);
+            box-shadow: 0 0 30px rgba(196, 30, 58, 0.5);
+        }
+
+        .security-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .security-card:hover .security-icon {
+            transform: scale(1.2) rotate(10deg);
+        }
+
+        .security-name {
+            font-size: 12px;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .security-detail {
+            margin-top: 30px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.4s ease;
+            display: none;
+        }
+
+        .security-detail.show {
+            opacity: 1;
+            transform: translateY(0);
+            display: block;
+        }
+
+        .security-detail h4 {
+            font-size: 20px;
+            color: var(--primary-gold);
+            margin-bottom: 15px;
+        }
+
+        .security-detail p {
+            font-size: 14px;
+            line-height: 1.8;
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        /* Slide 4 - Carousel */
+        .slide-4 {
+            background: linear-gradient(180deg, #1a0505 0%, #0a0a0a 100%);
+        }
+
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            margin-top: 30px;
+        }
+
+        .carousel-track {
+            display: flex;
+            transition: transform 0.5s ease;
+            height: 100%;
+        }
+
+        .carousel-slide {
+            min-width: 100%;
+            padding: 0 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .case-card {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 25px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 500px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .case-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--primary-red), var(--primary-gold));
+        }
+
+        .case-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(196, 30, 58, 0.2);
+            color: var(--primary-red);
+            padding: 8px 18px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .case-title {
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 20px;
+        }
+
+        .case-story {
+            font-size: 15px;
+            line-height: 2;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 20px;
+        }
+
+        .case-warning {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 215, 0, 0.1);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+            border-radius: 15px;
+            padding: 15px 20px;
+        }
+
+        .case-warning-icon {
+            font-size: 24px;
+        }
+
+        .case-warning-text {
+            font-size: 13px;
+            color: var(--primary-gold);
+        }
+
+        .carousel-nav {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .map-marker:hover {
-            transform: scale(1.2);
-        }
-
-        .map-marker.unlocked {
-            filter: drop-shadow(0 0 10px #ffd700);
-        }
-
-        /* 进度条 */
-        .progress-bar {
-            background: rgba(255, 255, 255, 0.2);
+        .carousel-dot.active {
+            width: 30px;
             border-radius: 10px;
+            background: var(--primary-red);
+        }
+
+        /* Slide 5 - Action List */
+        .slide-5 {
+            background: linear-gradient(180deg, #0a0a0a 0%, #0d2818 100%);
+        }
+
+        .action-list {
+            margin-top: 30px;
+        }
+
+        .action-card {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 15px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .action-card:hover {
+            transform: translateX(10px);
+            border-color: var(--primary-gold);
+            box-shadow: -10px 0 30px rgba(255, 215, 0, 0.2);
+        }
+
+        .action-number {
+            width: 55px;
+            height: 55px;
+            background: linear-gradient(135deg, var(--primary-gold), #ffb300);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 900;
+            flex-shrink: 0;
+            box-shadow: 0 10px 30px rgba(255, 215, 0, 0.3);
+        }
+
+        .action-content h4 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .action-content p {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Slide 6 - Pledge */
+        .slide-6 {
+            background: linear-gradient(180deg, #0d2818 0%, #0a0a0a 50%, #1a0505 100%);
+            text-align: center;
+        }
+
+        .pledge-container {
+            max-width: 450px;
+            padding: 20px;
+        }
+
+        .pledge-icon {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 30px;
+            background: linear-gradient(135deg, var(--primary-red), #8b0000);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 50px;
+            box-shadow: 0 20px 50px rgba(196, 30, 58, 0.4);
+            animation: iconFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes iconFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+
+        .pledge-title {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 5px;
+            margin-bottom: 20px;
+        }
+
+        .pledge-text {
+            font-size: clamp(18px, 4vw, 24px);
+            line-height: 2;
+            font-weight: 500;
+            margin-bottom: 40px;
+        }
+
+        .pledge-text .name-input {
+            border: none;
+            border-bottom: 2px solid var(--primary-gold);
+            background: transparent;
+            color: var(--primary-gold);
+            font-size: 1.2em;
+            font-weight: 700;
+            text-align: center;
+            width: 150px;
+            padding: 0 10px;
+            outline: none;
+        }
+
+        .pledge-text .name-input::placeholder {
+            color: rgba(255, 215, 0, 0.5);
+        }
+
+        .pledge-btn {
+            padding: 22px 80px;
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary-red), #8b0000);
+            border: none;
+            border-radius: 60px;
+            cursor: pointer;
+            box-shadow: 0 15px 40px rgba(196, 30, 58, 0.4);
+            transition: all 0.3s ease;
+            position: relative;
             overflow: hidden;
         }
 
-        .progress-fill {
-            background: linear-gradient(90deg, #c41e3a, #ffd700);
-            height: 100%;
-            transition: width 0.5s ease;
+        .pledge-btn:hover {
+            transform: scale(1.05);
         }
 
-        /* 滚动隐藏 */
-        .hide-scrollbar::-webkit-scrollbar {
-            display: none;
+        .pledge-btn.success {
+            background: linear-gradient(135deg, #22c55e, #16a34a);
         }
 
-        .hide-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
+        .pledge-btn.success::after {
+            content: '✓';
+            margin-left: 10px;
         }
 
-        /* 红色光晕 */
-        .red-glow {
-            box-shadow: 0 0 30px rgba(196, 30, 58, 0.5);
+        /* Slide 7 - Complete */
+        .slide-7 {
+            background: radial-gradient(ellipse at center, #1a0505 0%, #0a0a0a 70%);
         }
 
-        /* 纸质纹理 */
-        .paper-texture {
-            background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23fff5e6" width="100" height="100"/><circle fill="%23ffd4a3" cx="25" cy="25" r="1" opacity="0.3"/><circle fill="%23ffd4a3" cx="75" cy="75" r="1" opacity="0.3"/></svg>');
-            background-size: 100px 100px;
+        .complete-container {
+            text-align: center;
+            z-index: 10;
         }
 
-        /* 章节导航 */
-        .chapter-nav {
+        .complete-icon {
+            font-size: 120px;
+            margin-bottom: 30px;
+            animation: scaleIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0) rotate(-180deg); opacity: 0; }
+            to { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .complete-title {
+            font-size: clamp(28px, 7vw, 42px);
+            font-weight: 900;
+            margin-bottom: 20px;
+        }
+
+        .complete-text {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 50px;
+            line-height: 1.8;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .stat-item {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 25px 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--primary-red), var(--primary-gold));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .complete-actions {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 15px 35px;
+            font-size: 15px;
+            font-weight: 600;
+            border: 1px solid var(--glass-border);
+            border-radius: 50px;
+            background: var(--glass-bg);
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: var(--primary-red);
+            transform: translateY(-3px);
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--primary-red), #8b0000);
+            border: none;
+        }
+
+        /* Navigation */
+        .nav-indicators {
             position: fixed;
-            right: 20px;
+            right: 30px;
             top: 50%;
             transform: translateY(-50%);
             z-index: 100;
@@ -218,933 +887,779 @@
             gap: 15px;
         }
 
-        .chapter-dot {
-            width: 12px;
-            height: 12px;
+        .nav-dot {
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.2);
             cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .nav-dot::before {
+            content: attr(data-label);
+            position: absolute;
+            right: 25px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .nav-dot:hover::before {
+            opacity: 1;
+        }
+
+        .nav-dot.active {
+            width: 40px;
+            border-radius: 10px;
+            background: var(--primary-red);
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-in {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s ease;
+        }
+
+        .animate-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Audio Button */
+        .audio-btn {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            backdrop-filter: blur(10px);
             transition: all 0.3s ease;
         }
 
-        .chapter-dot.active {
-            width: 40px;
-            border-radius: 10px;
-            background: #c41e3a;
+        .audio-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
         }
 
-        .chapter-dot.completed {
-            background: #22c55e;
+        .audio-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: #fff;
         }
 
-        /* 压力进度 */
-        .press-progress {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            overflow: hidden;
+        .audio-btn.playing .audio-bars {
+            display: flex;
+            gap: 3px;
+            align-items: flex-end;
             height: 20px;
         }
 
-        .press-fill {
-            background: linear-gradient(90deg, #c41e3a, #ffd700);
-            height: 100%;
-            width: 0%;
-            transition: width 0.1s linear;
+        .audio-bar {
+            width: 3px;
+            background: var(--primary-gold);
+            animation: audioWave 0.5s ease-in-out infinite alternate;
+        }
+
+        .audio-bar:nth-child(1) { height: 8px; animation-delay: 0s; }
+        .audio-bar:nth-child(2) { height: 16px; animation-delay: 0.1s; }
+        .audio-bar:nth-child(3) { height: 12px; animation-delay: 0.2s; }
+
+        @keyframes audioWave {
+            to { height: 20px; }
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .security-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .nav-indicators {
+                right: 15px;
+            }
+
+            .audio-btn {
+                top: 15px;
+                right: 15px;
+                width: 40px;
+                height: 40px;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="app">
-        <!-- 章节导航 -->
-        <div class="chapter-nav" v-if="currentChapter > 0 && currentChapter < 7">
-            <div
-                v-for="chapter in 6"
-                :key="chapter"
-                class="chapter-dot"
-                :class="{ active: currentChapter === chapter, completed: completedChapters.includes(chapter) }"
-                @click="scrollToChapter(chapter)"
-            ></div>
+    <!-- Loading Screen -->
+    <div class="loader" id="loader">
+        <div class="loader-shield">
+            <svg viewBox="0 0 100 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 5L90 20V60C90 85 70 110 50 115C30 110 10 85 10 60V20L50 5Z" fill="url(#loaderGradient)" stroke="#c41e3a" stroke-width="2"/>
+                <defs>
+                    <linearGradient id="loaderGradient" x1="50" y1="5" x2="50" y2="115" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#c41e3a"/>
+                        <stop offset="1" stop-color="#8b0000"/>
+                    </linearGradient>
+                </defs>
+            </svg>
         </div>
+        <p class="loader-text">守护加载中</p>
+        <div class="loader-progress">
+            <div class="loader-progress-bar"></div>
+        </div>
+    </div>
 
-        <!-- 封面 -->
-        <section v-if="currentChapter === 0" class="min-h-screen flex flex-col items-center justify-center p-8 relative overflow-hidden">
-            <!-- 背景装饰 -->
-            <div class="absolute inset-0 opacity-10">
-                <div class="absolute top-10 left-10 text-6xl star-twinkle" style="animation-delay: 0s;">★</div>
-                <div class="absolute top-20 right-20 text-4xl star-twinkle" style="animation-delay: 0.5s;">★</div>
-                <div class="absolute bottom-20 left-20 text-5xl star-twinkle" style="animation-delay: 1s;">★</div>
-                <div class="absolute bottom-10 right-10 text-4xl star-twinkle" style="animation-delay: 1.5s;">★</div>
-            </div>
+    <!-- Particle Background -->
+    <canvas id="particleCanvas"></canvas>
 
-            <!-- 红绸装饰 -->
-            <div class="absolute top-0 left-0 w-full h-2 red-gradient"></div>
-            <div class="absolute bottom-0 left-0 w-full h-2 red-gradient"></div>
+    <!-- Audio Control -->
+    <button class="audio-btn" id="audioBtn" onclick="toggleAudio()">
+        <svg viewBox="0 0 24 24" id="audioIcon">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+        </svg>
+    </button>
 
-            <!-- 主内容 -->
-            <div class="text-center z-10">
-                <!-- 标题 -->
-                <div class="mb-8">
-                    <div class="text-5xl md:text-7xl font-black text-red-600 mb-4 silk-wave">红色传承</div>
-                    <div class="text-2xl md:text-3xl text-yellow-500 chapter-title">红色足迹闯关</div>
-                </div>
-
-                <!-- 徽章 -->
-                <div class="w-32 h-32 mx-auto mb-8 relative">
-                    <div class="absolute inset-0 red-gradient rounded-full opacity-20 animate-ping"></div>
-                    <div class="relative w-full h-full red-gradient rounded-full flex items-center justify-center red-glow">
-                        <svg class="w-16 h-16 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+    <!-- Main Content -->
+    <div class="swiper-container">
+        <div class="swiper-wrapper" id="swiperWrapper">
+            <!-- Slide 1: Hero -->
+            <div class="swiper-slide slide-1">
+                <div class="hero-content">
+                    <div class="hero-badge">全民国家安全教育日</div>
+                    <h1 class="hero-title">
+                        <span class="hero-title-line main">国安在我心</span>
+                        <span class="hero-title-line sub">青春共守护</span>
+                    </h1>
+                    <div class="hero-3d-shield">
+                        <div class="shield-3d">
+                            <div class="shield-front">
+                                <div class="shield-glow"></div>
+                                <svg viewBox="0 0 200 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M100 10L180 40V100C180 150 140 200 100 210C60 200 20 150 20 100V40L100 10Z" fill="url(#shieldGrad1)" stroke="url(#shieldGrad2)" stroke-width="3"/>
+                                    <path d="M70 110L90 130L130 90" stroke="white" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <circle cx="100" cy="60" r="8" fill="#ffd700"/>
+                                    <defs>
+                                        <linearGradient id="shieldGrad1" x1="100" y1="10" x2="100" y2="210" gradientUnits="userSpaceOnUse">
+                                            <stop stop-color="#c41e3a"/>
+                                            <stop offset="1" stop-color="#8b0000"/>
+                                        </linearGradient>
+                                        <linearGradient id="shieldGrad2" x1="100" y1="10" x2="100" y2="210" gradientUnits="userSpaceOnUse">
+                                            <stop stop-color="#ff6b6b"/>
+                                            <stop offset="1" stop-color="#c41e3a"/>
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                    <button class="hero-cta" onclick="goToSlide(1)">
+                        <span>开启守护之旅</span>
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14M12 5l7 7-7 7"/>
                         </svg>
-                    </div>
-                </div>
-
-                <!-- 开始按钮 -->
-                <button
-                    @click="startJourney"
-                    class="red-gradient text-white px-12 py-4 rounded-full text-xl font-bold long-press-hint red-glow hover:scale-105 transition-transform"
-                >
-                    开始红色之旅
-                </button>
-
-                <!-- 说明 -->
-                <p class="mt-8 text-white/60 text-sm">闯关探索 · 学习知识 · 留言致敬 · 获得证书</p>
-            </div>
-
-            <!-- 统计信息 -->
-            <div class="absolute bottom-10 left-0 right-0 flex justify-center gap-8 text-center">
-                <div>
-                    <div class="text-2xl font-bold text-yellow-500">{{ honorCount }}</div>
-                    <div class="text-xs text-white/60">致敬人数</div>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-yellow-500">{{ oathCount }}</div>
-                    <div class="text-xs text-white/60">宣誓人数</div>
-                </div>
-            </div>
-        </section>
-
-        <!-- 第一章：红色地图 -->
-        <section v-if="currentChapter === 1" class="min-h-screen p-6 chapter-enter-active">
-            <div class="max-w-lg mx-auto">
-                <!-- 标题 -->
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-black text-yellow-500 chapter-title">第一章</h2>
-                    <p class="text-xl text-red-400">红色足迹地图</p>
-                    <p class="text-white/60 text-sm mt-2">探索中国革命历史的重要地点</p>
-                </div>
-
-                <!-- 地图 -->
-                <div class="relative bg-gradient-to-br from-green-900/30 to-green-800/30 rounded-3xl p-8 min-h-[500px] border border-green-700/30">
-                    <!-- 中国地图简化版 -->
-                    <svg viewBox="0 0 400 500" class="w-full h-auto">
-                        <!-- 地图轮廓 -->
-                        <path d="M100,50 L300,50 L350,150 L320,300 L250,450 L150,450 L50,300 L80,150 Z" fill="rgba(34,197,94,0.2)" stroke="#22c55e" stroke-width="2"/>
-
-                        <!-- 红色地点标记 -->
-                        <!-- 嘉兴南湖 -->
-                        <circle
-                            cx="250"
-                            cy="200"
-                            r="12"
-                            :fill="meetingItems.jiaxing.unlocked ? '#ffd700' : '#666'"
-                            class="map-marker"
-                            :class="{ unlocked: meetingItems.jiaxing.unlocked }"
-                            @click="showMarkerDetail('jiaxing')"
-                        />
-                        <text x="250" y="235" text-anchor="middle" fill="white" font-size="12">嘉兴南湖</text>
-
-                        <!-- 井冈山 -->
-                        <circle
-                            cx="200"
-                            cy="280"
-                            r="12"
-                            :fill="meetingItems.jinggangshan.unlocked ? '#ffd700' : '#666'"
-                            class="map-marker"
-                            :class="{ unlocked: meetingItems.jinggangshan.unlocked }"
-                            @click="showMarkerDetail('jinggangshan')"
-                        />
-                        <text x="200" y="315" text-anchor="middle" fill="white" font-size="12">井冈山</text>
-
-                        <!-- 遵义 -->
-                        <circle
-                            cx="180"
-                            cy="320"
-                            r="12"
-                            :fill="meetingItems.zunyi.unlocked ? '#ffd700' : '#666'"
-                            class="map-marker"
-                            :class="{ unlocked: meetingItems.zunyi.unlocked }"
-                            @click="showMarkerDetail('zunyi')"
-                        />
-                        <text x="180" y="355" text-anchor="middle" fill="white" font-size="12">遵义</text>
-
-                        <!-- 延安 -->
-                        <circle
-                            cx="200"
-                            cy="200"
-                            r="12"
-                            :fill="meetingItems.yan'an.unlocked ? '#ffd700' : '#666'"
-                            class="map-marker"
-                            :class="{ unlocked: meetingItems.yan'an.unlocked }"
-                            @click="showMarkerDetail('yan'an')"
-                        />
-                        <text x="235" y="205" text-anchor="start" fill="white" font-size="12">延安</text>
-
-                        <!-- 西柏坡 -->
-                        <circle
-                            cx="230"
-                            cy="150"
-                            r="12"
-                            :fill="meetingItems.xibaipo.unlocked ? '#ffd700' : '#666'"
-                            class="map-marker"
-                            :class="{ unlocked: meetingItems.xibaipo.unlocked }"
-                            @click="showMarkerDetail('xibaipo')"
-                        />
-                        <text x="265" y="155" text-anchor="start" fill="white" font-size="12">西柏坡</text>
-                    </svg>
-
-                    <!-- 进度提示 -->
-                    <div class="absolute bottom-4 left-4 right-4 bg-black/50 rounded-xl p-4">
-                        <div class="flex justify-between text-sm mb-2">
-                            <span>探索进度</span>
-                            <span>{{ unlockedCount }}/5</span>
-                        </div>
-                        <div class="progress-bar h-2">
-                            <div class="progress-fill" :style="{ width: (unlockedCount / 5 * 100) + '%' }"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 详情弹窗 -->
-                <div v-if="currentMeetingDetail" class="fixed inset-0 bg-black/80 flex items-center justify-center p-6 z-50" @click.self="currentMeetingDetail = null">
-                    <div class="bg-gradient-to-br from-red-900/90 to-red-800/90 rounded-3xl p-8 max-w-md w-full border-2 border-yellow-500">
-                        <h3 class="text-2xl font-bold text-yellow-500 mb-4">{{ currentMeetingDetail.name }}</h3>
-                        <p class="text-white/90 mb-6 leading-relaxed">{{ currentMeetingDetail.description }}</p>
-                        <div class="text-sm text-yellow-400 mb-6">
-                            <span class="font-bold">历史意义：</span>{{ currentMeetingDetail.significance }}
-                        </div>
-                        <div v-if="!currentMeetingDetail.unlocked" class="text-center">
-                            <p class="text-white/60 mb-4">长按3秒解锁这个红色足迹</p>
-                            <div class="press-progress mb-4">
-                                <div class="press-fill" :style="{ width: pressProgress + '%' }"></div>
-                            </div>
-                            <button
-                                @touchstart="handleLongPressStart(currentMeetingDetail.id)"
-                                @touchend="handleLongPressEnd"
-                                @mousedown="handleLongPressStart(currentMeetingDetail.id)"
-                                @mouseup="handleLongPressEnd"
-                                class="w-full red-gradient text-white py-3 rounded-xl font-bold"
-                            >
-                                按住解锁
-                            </button>
-                        </div>
-                        <div v-else class="text-center">
-                            <p class="text-green-400 mb-4">✓ 已解锁</p>
-                            <button @click="currentMeetingDetail = null" class="w-full bg-white/20 text-white py-3 rounded-xl font-bold">关闭</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 下一章按钮 -->
-                <button
-                    v-if="unlockedCount >= 5"
-                    @click="nextChapter"
-                    class="w-full mt-6 red-gradient text-white py-4 rounded-xl font-bold text-lg"
-                >
-                    进入下一章 →
-                </button>
-            </div>
-        </section>
-
-        <!-- 第二章：知识问答 -->
-        <section v-if="currentChapter === 2" class="min-h-screen p-6 chapter-enter-active">
-            <div class="max-w-lg mx-auto">
-                <!-- 标题 -->
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-black text-yellow-500 chapter-title">第二章</h2>
-                    <p class="text-xl text-red-400">红色知识挑战</p>
-                </div>
-
-                <!-- 进度 -->
-                <div class="bg-white/10 rounded-xl p-4 mb-6">
-                    <div class="flex justify-between text-sm mb-2">
-                        <span>答题进度</span>
-                        <span>{{ currentQuestionIndex + 1 }}/{{ questionList.length }}</span>
-                    </div>
-                    <div class="progress-bar h-2">
-                        <div class="progress-fill" :style="{ width: ((currentQuestionIndex + 1) / questionList.length * 100) + '%' }"></div>
-                    </div>
-                </div>
-
-                <!-- 题目 -->
-                <div v-if="currentQuestion" class="bg-white/10 rounded-3xl p-8 mb-6">
-                    <h3 class="text-xl font-bold mb-8">{{ currentQuestion.question }}</h3>
-
-                    <!-- 选项 -->
-                    <div class="space-y-4">
-                        <button
-                            v-for="(option, index) in currentQuestion.options"
-                            :key="index"
-                            @click="selectOption(index)"
-                            :disabled="questionAnswered"
-                            class="option-btn w-full p-4 rounded-xl border-2 border-white/20 text-left transition-all"
-                            :class="{
-                                selected: selectedOption === index,
-                                correct: questionAnswered && index === currentQuestion.correct,
-                                wrong: questionAnswered && selectedOption === index && index !== currentQuestion.correct
-                            }"
-                        >
-                            <span class="font-bold mr-2">{{ ['A', 'B', 'C', 'D'][index] }}.</span>
-                            {{ option }}
-                        </button>
-                    </div>
-
-                    <!-- 答案反馈 -->
-                    <div v-if="questionAnswered" class="mt-6 p-4 rounded-xl" :class="selectedOption === currentQuestion.correct ? 'bg-green-500/20' : 'bg-red-500/20'">
-                        <p class="font-bold" :class="selectedOption === currentQuestion.correct ? 'text-green-400' : 'text-red-400'">
-                            {{ selectedOption === currentQuestion.correct ? '✓ 回答正确！' : '✗ 回答错误' }}
-                        </p>
-                        <p class="text-white/80 mt-2">{{ currentQuestion.explanation }}</p>
-                    </div>
-
-                    <!-- 下一题按钮 -->
-                    <button
-                        v-if="questionAnswered"
-                        @click="nextQuestion"
-                        class="w-full mt-6 red-gradient text-white py-4 rounded-xl font-bold"
-                    >
-                        {{ currentQuestionIndex < questionList.length - 1 ? '下一题' : '完成挑战' }}
                     </button>
+                    <div class="hero-hint">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M15 18l-6-6 6-6"/>
+                        </svg>
+                        <span>滑动探索更多</span>
+                    </div>
                 </div>
+            </div>
 
-                <!-- 完成状态 -->
-                <div v-if="currentQuestionIndex >= questionList.length" class="text-center">
-                    <div class="text-6xl mb-4">🎉</div>
-                    <h3 class="text-2xl font-bold text-yellow-500 mb-4">挑战完成！</h3>
-                    <p class="text-white/80 mb-8">
-                        你答对了 {{ score }}/{{ questionList.length }} 道题目
+            <!-- Slide 2: Timeline -->
+            <div class="swiper-slide slide-2">
+                <div class="slide-container">
+                    <div class="slide-header animate-in">
+                        <p class="slide-number">02 / 07</p>
+                        <h2 class="slide-title">国家安全的<span class="highlight">发展历程</span></h2>
+                    </div>
+                    <div class="timeline">
+                        <div class="timeline-item animate-in" style="transition-delay: 0.1s;">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2014年</div>
+                            <div class="timeline-content">
+                                <h4>总体国家安全观提出</h4>
+                                <p>习近平总书记首次提出总体国家安全观，为新时代国家安全工作提供根本遵循</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item animate-in" style="transition-delay: 0.2s;">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2015年</div>
+                            <div class="timeline-content">
+                                <h4>国家安全法颁布</h4>
+                                <p>《中华人民共和国国家安全法》正式实施，将每年4月15日定为全民国家安全教育日</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item animate-in" style="transition-delay: 0.3s;">
+                            <div class="timeline-dot"></div>
+                            <div class="timeline-year">2023年</div>
+                            <div class="timeline-content">
+                                <h4>国家安全体系建设</h4>
+                                <p>国家安全体系和能力现代化水平显著提升，国家安全屏障更加牢固</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 3: Security Grid -->
+            <div class="swiper-slide slide-3">
+                <div class="slide-container">
+                    <div class="slide-header animate-in">
+                        <p class="slide-number">03 / 07</p>
+                        <h2 class="slide-title">国家安全的<span class="highlight">16个领域</span></h2>
+                        <p style="color:rgba(255,255,255,0.5);font-size:14px;margin-top:10px;">点击卡片了解详情</p>
+                    </div>
+                    <div class="security-grid animate-in" style="transition-delay: 0.1s;">
+                        <div class="security-card" onclick="showSecurityDetail('政治安全', '政治安全是国家安全的根本，核心是维护政权安全和制度安全。坚持党的领导，维护中国特色社会主义制度。')">
+                            <span class="security-icon">🏛️</span>
+                            <span class="security-name">政治安全</span>
+                        </div>
+                        <div class="security-card" onclick="showSecurityDetail('军事安全', '军事安全是国家安宁的重要保障。加强国防和军队建设，捍卫国家主权、领土完整。')">
+                            <span class="security-icon">⚔️</span>
+                            <span class="security-name">军事安全</span>
+                        </div>
+                        <div class="security-card" onclick="showSecurityDetail('经济安全', '经济安全是国家安全的基础。维护金融稳定，保障重要产业安全，防范经济风险。')">
+                            <span class="security-icon">💰</span>
+                            <span class="security-name">经济安全</span>
+                        </div>
+                        <div class="security-card" onclick="showSecurityDetail('文化安全', '文化安全关乎民族精神传承。传承中华优秀传统文化，增强文化自信，抵御不良文化侵蚀。')">
+                            <span class="security-icon">🎭</span>
+                            <span class="security-name">文化安全</span>
+                        </div>
+                        <div class="security-card" onclick="showSecurityDetail('社会安全', '社会安全与每个人息息相关。维护社会秩序稳定，保障人民群众生命财产安全。')">
+                            <span class="security-icon">👥</span>
+                            <span class="security-name">社会安全</span>
+                        </div>
+                        <div class="security-card" onclick="showSecurityDetail('科技安全', '科技安全是核心竞争力。加强自主创新，保护核心技术，防范科技领域风险。')">
+                            <span class="security-icon">🔬</span>
+                            <span class="security-name">科技安全</span>
+                        </div>
+                        <div class="security-card" onclick="showSecurityDetail('网络安全', '网络安全是新战场。保护关键信息基础设施，防范网络攻击，维护网络空间主权。')">
+                            <span class="security-icon">🌐</span>
+                            <span class="security-name">网络安全</span>
+                        </div>
+                        <div class="security-card" onclick="showSecurityDetail('生态安全', '生态安全关乎可持续发展。保护生态环境，防治环境污染，建设美丽中国。')">
+                            <span class="security-icon">🌿</span>
+                            <span class="security-name">生态安全</span>
+                        </div>
+                        <div class="security-card" onclick="showSecurityDetail('资源安全', '资源安全是发展保障。保护战略资源，提高资源利用效率，确保资源供给安全。')">
+                            <span class="security-icon">💎</span>
+                            <span class="security-name">资源安全</span>
+                        </div>
+                    </div>
+                    <div class="security-detail" id="securityDetail">
+                        <h4 id="detailTitle">政治安全</h4>
+                        <p id="detailText">政治安全是国家安全的根本，核心是维护政权安全和制度安全。坚持党的领导，维护中国特色社会主义制度。</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 4: Case Carousel -->
+            <div class="swiper-slide slide-4">
+                <div class="slide-container">
+                    <div class="slide-header animate-in">
+                        <p class="slide-number">04 / 07</p>
+                        <h2 class="slide-title">真实案例<span class="highlight">警钟长鸣</span></h2>
+                    </div>
+                    <div class="carousel-container animate-in" style="transition-delay: 0.1s;">
+                        <div class="carousel-track" id="carouselTrack">
+                            <div class="carousel-slide">
+                                <div class="case-card">
+                                    <span class="case-tag">🔍 网络间谍案例</span>
+                                    <h3 class="case-title">境外势力拉拢策反</h3>
+                                    <p class="case-story">
+                                        某高校研究生在学术交流论坛结识"境外学者"，对方以高额稿费为诱饵，要求其撰写内部研究报告。在金钱诱惑下，该学生逐渐沦为境外间谍机构情报来源，最终被国家安全机关依法查处。
+                                    </p>
+                                    <div class="case-warning">
+                                        <span class="case-warning-icon">⚠️</span>
+                                        <span class="case-warning-text">警惕境外"学术交流"陷阱，天上不会掉馅饼</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="carousel-slide">
+                                <div class="case-card">
+                                    <span class="case-tag">📱 数据泄露案例</span>
+                                    <h3 class="case-title">个人信息非法交易</h3>
+                                    <p class="case-story">
+                                        某互联网公司员工利用职务便利，批量下载用户个人信息并出售给诈骗团伙，导致大量公民遭受电信诈骗，财产损失严重。最终该员工被判处有期徒刑，并处罚金。
+                                    </p>
+                                    <div class="case-warning">
+                                        <span class="case-warning-icon">⚠️</span>
+                                        <span class="case-warning-text">个人信息是资产，非法交易必被究</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="carousel-slide">
+                                <div class="case-card">
+                                    <span class="case-tag">📸 摄影泄密案例</span>
+                                    <h3 class="case-title">军事禁区随手拍</h3>
+                                    <p class="case-story">
+                                        游客自驾游途中经过军事管理区，觉得风景独特便拍摄照片和视频，并上传至社交媒体平台。这些影像无意中暴露了军事设施部署情况，对国家安全造成潜在威胁。
+                                    </p>
+                                    <div class="case-warning">
+                                        <span class="case-warning-icon">⚠️</span>
+                                        <span class="case-warning-text">涉密场所不拍照，分享生活需谨慎</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="carousel-nav">
+                            <div class="carousel-dot active" data-index="0" onclick="goToCarouselSlide(0)"></div>
+                            <div class="carousel-dot" data-index="1" onclick="goToCarouselSlide(1)"></div>
+                            <div class="carousel-dot" data-index="2" onclick="goToCarouselSlide(2)"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 5: Action List -->
+            <div class="swiper-slide slide-5">
+                <div class="slide-container">
+                    <div class="slide-header animate-in">
+                        <p class="slide-number">05 / 07</p>
+                        <h2 class="slide-title">青春的我们<span class="highlight">如何行动</span></h2>
+                    </div>
+                    <div class="action-list animate-in" style="transition-delay: 0.1s;">
+                        <div class="action-card">
+                            <div class="action-number">1</div>
+                            <div class="action-content">
+                                <h4>提高警惕意识</h4>
+                                <p>主动学习国家安全知识，增强防范意识，不给不法分子可乘之机</p>
+                            </div>
+                        </div>
+                        <div class="action-card">
+                            <div class="action-number">2</div>
+                            <div class="action-content">
+                                <h4>保护个人信息</h4>
+                                <p>妥善保管个人证件和信息，不随意泄露给他人或上传至网络平台</p>
+                            </div>
+                        </div>
+                        <div class="action-card">
+                            <div class="action-number">3</div>
+                            <div class="action-content">
+                                <h4>文明健康上网</h4>
+                                <p>不信谣、不传谣，自觉抵制有害信息，共同维护清朗网络空间</p>
+                            </div>
+                        </div>
+                        <div class="action-card">
+                            <div class="action-number">4</div>
+                            <div class="action-content">
+                                <h4>主动举报线索</h4>
+                                <p>发现危害国家安全的行为，及时拨打12339举报电话</p>
+                            </div>
+                        </div>
+                        <div class="action-card">
+                            <div class="action-number">5</div>
+                            <div class="action-content">
+                                <h4>传播正能量</h4>
+                                <p>积极宣传国家安全知识，带动身边人共同参与守护国家安全</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Slide 6: Pledge -->
+            <div class="swiper-slide slide-6">
+                <div class="pledge-container">
+                    <div class="pledge-icon">🛡️</div>
+                    <p class="pledge-title">我庄严承诺</p>
+                    <div class="pledge-text">
+                        我志愿成为国家安全的<span class="name-input" id="pledgeName" contenteditable="true" placeholder="守护者"></span><br>
+                        自觉维护国家安全<br>
+                        保守国家秘密<br>
+                        坚决抵制一切危害<br>
+                        国家安全的行为<br>
+                        让青春与国家安全同行
+                    </div>
+                    <button class="pledge-btn" id="pledgeBtn" onclick="makePledge()">我承诺</button>
+                </div>
+            </div>
+
+            <!-- Slide 7: Complete -->
+            <div class="swiper-slide slide-7">
+                <div class="complete-container">
+                    <div class="complete-icon">🏆</div>
+                    <h2 class="complete-title">感谢你的参与</h2>
+                    <p class="complete-text">
+                        国家安全，人人有责<br>
+                        青春力量，守护有我<br>
+                        让我们携手共筑国家安全防线
                     </p>
-                    <div class="bg-white/10 rounded-xl p-6 mb-8">
-                        <p class="text-yellow-400 font-bold mb-2">最终得分</p>
-                        <p class="text-5xl font-black text-yellow-500">{{ score }}</p>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <div class="stat-number" data-target="16">0</div>
+                            <div class="stat-label">安全领域</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" data-target="12339">0</div>
+                            <div class="stat-label">举报电话</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-number" data-target="365">0</div>
+                            <div class="stat-label">天天守护</div>
+                        </div>
                     </div>
-                    <button @click="nextChapter" class="w-full red-gradient text-white py-4 rounded-xl font-bold text-lg">
-                        进入下一章 →
-                    </button>
+                    <div class="complete-actions">
+                        <button class="action-btn primary" onclick="location.reload()">再次学习</button>
+                        <button class="action-btn" onclick="shareContent()">分享传递</button>
+                    </div>
                 </div>
             </div>
-        </section>
+        </div>
+    </div>
 
-        <!-- 第三章：致敬留言 -->
-        <section v-if="currentChapter === 3" class="min-h-screen p-6 chapter-enter-active">
-            <div class="max-w-lg mx-auto">
-                <!-- 标题 -->
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-black text-yellow-500 chapter-title">第三章</h2>
-                    <p class="text-xl text-red-400">致敬英烈</p>
-                    <p class="text-white/60 text-sm mt-2">已有 {{ honorCount }} 人参与致敬</p>
-                </div>
-
-                <!-- 留言输入 -->
-                <div class="bg-white/10 rounded-3xl p-6 mb-6">
-                    <h3 class="text-lg font-bold mb-4">留下你的致敬</h3>
-                    <textarea
-                        v-model="honorText"
-                        placeholder="向革命先烈致敬..."
-                        class="w-full bg-black/30 border border-white/20 rounded-xl p-4 text-white placeholder-white/40 resize-none h-24 focus:outline-none focus:border-red-500"
-                    ></textarea>
-                    <button
-                        @click="submitHonor"
-                        :disabled="!honorText.trim()"
-                        class="w-full mt-4 red-gradient text-white py-3 rounded-xl font-bold disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        提交致敬
-                    </button>
-                </div>
-
-                <!-- 留言列表 -->
-                <div class="space-y-4 max-h-[400px] overflow-y-auto hide-scrollbar">
-                    <div
-                        v-for="honor in honorList"
-                        :key="honor.id"
-                        class="honor-item bg-white/5 rounded-xl p-4 border-l-4 border-red-600"
-                    >
-                        <p class="text-white/90">{{ honor.content }}</p>
-                        <p class="text-white/40 text-xs mt-2">{{ formatTime(honor.created_at) }}</p>
-                    </div>
-                </div>
-
-                <!-- 下一章按钮 -->
-                <button
-                    v-if="hasSubmittedHonor"
-                    @click="nextChapter"
-                    class="w-full mt-6 red-gradient text-white py-4 rounded-xl font-bold text-lg"
-                >
-                    进入下一章 →
-                </button>
-            </div>
-        </section>
-
-        <!-- 第四章：宣誓 -->
-        <section v-if="currentChapter === 4" class="min-h-screen p-6 chapter-enter-active">
-            <div class="max-w-lg mx-auto">
-                <!-- 标题 -->
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-black text-yellow-500 chapter-title">第四章</h2>
-                    <p class="text-xl text-red-400">庄严宣誓</p>
-                    <p class="text-white/60 text-sm mt-2">已有 {{ oathCount }} 人参与宣誓</p>
-                </div>
-
-                <!-- 宣誓内容 -->
-                <div class="bg-gradient-to-br from-red-900/50 to-red-800/50 rounded-3xl p-8 mb-6 border-2 border-yellow-500">
-                    <div class="text-center mb-6">
-                        <div class="w-20 h-20 mx-auto mb-4 red-gradient rounded-full flex items-center justify-center">
-                            <svg class="w-10 h-10 text-yellow-500" fill="currentColor" viewBox="0 0 24 24">
-                                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
-                            </svg>
-                        </div>
-                        <h3 class="text-2xl font-bold text-yellow-500">我宣誓</h3>
-                    </div>
-
-                    <div class="text-lg leading-loose text-white/90 text-center">
-                        <p>我志愿成为</p>
-                        <p class="text-yellow-400 font-bold text-2xl my-4">红色传承者</p>
-                        <p>传承红色基因</p>
-                        <p>赓续红色血脉</p>
-                        <p>坚定理想信念</p>
-                        <p>为实现中华民族伟大复兴</p>
-                        <p>贡献青春力量！</p>
-                    </div>
-                </div>
-
-                <!-- 宣誓按钮 -->
-                <button
-                    v-if="!hasTakenOath"
-                    @click="takeOath"
-                    class="w-full red-gradient text-white py-4 rounded-xl font-bold text-lg mb-4 red-glow"
-                >
-                    我宣誓
-                </button>
-
-                <!-- 已宣誓状态 -->
-                <div v-else class="text-center bg-green-500/20 rounded-xl p-6 mb-4">
-                    <p class="text-green-400 font-bold text-xl mb-2">✓ 宣誓完成</p>
-                    <p class="text-white/60">感谢你的庄严承诺</p>
-                </div>
-
-                <!-- 统计 -->
-                <div class="bg-white/10 rounded-xl p-6 text-center mb-6">
-                    <p class="text-yellow-400 font-bold mb-2">全国宣誓人数</p>
-                    <p class="text-4xl font-black text-yellow-500">{{ oathCount }}</p>
-                </div>
-
-                <!-- 下一章按钮 -->
-                <button
-                    v-if="hasTakenOath"
-                    @click="nextChapter"
-                    class="w-full red-gradient text-white py-4 rounded-xl font-bold text-lg"
-                >
-                    进入下一章 →
-                </button>
-            </div>
-        </section>
-
-        <!-- 第五章：证书 -->
-        <section v-if="currentChapter === 5" class="min-h-screen p-6 chapter-enter-active">
-            <div class="max-w-lg mx-auto">
-                <!-- 标题 -->
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-black text-yellow-500 chapter-title">第五章</h2>
-                    <p class="text-xl text-red-400">荣誉证书</p>
-                </div>
-
-                <!-- 证书预览 -->
-                <div
-                    ref="certificateRef"
-                    class="certificate rounded-3xl p-8 mb-6 paper-texture"
-                >
-                    <div class="text-center">
-                        <!-- 装饰 -->
-                        <div class="flex justify-center mb-4">
-                            <div class="text-4xl">★</div>
-                        </div>
-
-                        <!-- 标题 -->
-                        <h3 class="text-3xl font-black text-red-700 mb-2">荣誉证书</h3>
-                        <p class="text-gray-600 mb-6">CERTIFICATE OF HONOR</p>
-
-                        <!-- 内容 -->
-                        <div class="mb-6">
-                            <p class="text-gray-700 mb-2">特颁发给</p>
-                            <p class="text-2xl font-bold text-red-600">红色传承者</p>
-                        </div>
-
-                        <div class="text-gray-700 leading-relaxed mb-6">
-                            <p>以表彰您在"红色足迹闯关"活动中</p>
-                            <p>认真学习红色历史</p>
-                            <p>传承红色精神</p>
-                            <p>完成全部挑战</p>
-                        </div>
-
-                        <!-- 成绩 -->
-                        <div class="bg-white/50 rounded-xl p-4 mb-6">
-                            <div class="grid grid-cols-3 gap-4 text-center">
-                                <div>
-                                    <p class="text-2xl font-bold text-red-600">{{ score }}</p>
-                                    <p class="text-xs text-gray-600">知识得分</p>
-                                </div>
-                                <div>
-                                    <p class="text-2xl font-bold text-red-600">5</p>
-                                    <p class="text-xs text-gray-600">足迹解锁</p>
-                                </div>
-                                <div>
-                                    <p class="text-2xl font-bold text-red-600">✓</p>
-                                    <p class="text-xs text-gray-600">庄严宣誓</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 日期和编号 -->
-                        <div class="flex justify-between text-sm text-gray-600">
-                            <p>编号：RH-{{ certificateNumber }}</p>
-                            <p>{{ currentDate }}</p>
-                        </div>
-
-                        <!-- 底部装饰 -->
-                        <div class="mt-6 flex justify-center">
-                            <div class="text-2xl">★ ★ ★</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 操作按钮 -->
-                <div class="space-y-4">
-                    <button
-                        @click="downloadCertificate"
-                        class="w-full red-gradient text-white py-4 rounded-xl font-bold text-lg"
-                    >
-                        📥 保存证书
-                    </button>
-                    <button
-                        @click="shareCertificate"
-                        class="w-full bg-white/20 text-white py-4 rounded-xl font-bold"
-                    >
-                        📤 分享证书
-                    </button>
-                    <button
-                        @click="nextChapter"
-                        class="w-full bg-yellow-500 text-black py-4 rounded-xl font-bold text-lg"
-                    >
-                        完成挑战 →
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- 第六章：完成 -->
-        <section v-if="currentChapter === 6" class="min-h-screen p-6 chapter-enter-active">
-            <div class="max-w-lg mx-auto text-center">
-                <!-- 庆祝动画 -->
-                <div class="text-8xl mb-8">🏆</div>
-
-                <!-- 标题 -->
-                <h2 class="text-4xl font-black text-yellow-500 chapter-title mb-4">挑战完成！</h2>
-                <p class="text-white/80 mb-12">感谢你完成红色传承之旅</p>
-
-                <!-- 最终统计 -->
-                <div class="bg-white/10 rounded-3xl p-8 mb-8">
-                    <div class="grid grid-cols-2 gap-6">
-                        <div>
-                            <p class="text-4xl font-black text-yellow-500">{{ honorCount }}</p>
-                            <p class="text-white/60 text-sm">致敬人数</p>
-                        </div>
-                        <div>
-                            <p class="text-4xl font-black text-yellow-500">{{ oathCount }}</p>
-                            <p class="text-white/60 text-sm">宣誓人数</p>
-                        </div>
-                        <div>
-                            <p class="text-4xl font-black text-yellow-500">{{ score }}</p>
-                            <p class="text-white/60 text-sm">知识得分</p>
-                        </div>
-                        <div>
-                            <p class="text-4xl font-black text-yellow-500">100%</p>
-                            <p class="text-white/60 text-sm">完成度</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 分享 -->
-                <div class="space-y-4">
-                    <button
-                        @click="shareResult"
-                        class="w-full red-gradient text-white py-4 rounded-xl font-bold text-lg"
-                    >
-                        📤 分享成果
-                    </button>
-                    <button
-                        @click="location.reload()"
-                        class="w-full bg-white/20 text-white py-4 rounded-xl font-bold"
-                    >
-                        🔄 重新挑战
-                    </button>
-                </div>
-
-                <!-- 页脚 -->
-                <div class="mt-12 text-white/40 text-sm">
-                    <p>红色传承 · 红色足迹闯关</p>
-                    <p class="mt-2">传承红色基因 赓续红色血脉</p>
-                </div>
-            </div>
-        </section>
+    <!-- Navigation Indicators -->
+    <div class="nav-indicators" id="navIndicators">
+        <div class="nav-dot active" data-label="首页" onclick="goToSlide(0)"></div>
+        <div class="nav-dot" data-label="历程" onclick="goToSlide(1)"></div>
+        <div class="nav-dot" data-label="领域" onclick="goToSlide(2)"></div>
+        <div class="nav-dot" data-label="案例" onclick="goToSlide(3)"></div>
+        <div class="nav-dot" data-label="行动" onclick="goToSlide(4)"></div>
+        <div class="nav-dot" data-label="承诺" onclick="goToSlide(5)"></div>
+        <div class="nav-dot" data-label="完成" onclick="goToSlide(6)"></div>
     </div>
 
     <script>
-        const { createApp, ref, computed, onMounted } = Vue;
+        // Global Variables
+        let currentSlide = 0;
+        const totalSlides = 7;
+        let isAnimating = false;
+        let carouselIndex = 0;
+        let audioContext = null;
+        let isPlaying = false;
 
-        createApp({
-            setup() {
-                // 状态管理
-                const currentChapter = ref(0);
-                const completedChapters = ref([]);
-                const honorCount = ref(12847);
-                const oathCount = ref(9562);
-                const honorText = ref('');
-                const hasSubmittedHonor = ref(false);
-                const hasTakenOath = ref(false);
-                const honorList = ref([]);
-                const score = ref(0);
+        // Loading Screen
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loader').classList.add('hidden');
+                initAnimations();
+            }, 2500);
+        });
 
-                // 第一章：红色足迹
-                const meetingItems = ref({
-                    jiaxing: {
-                        id: 'jiaxing',
-                        name: '嘉兴南湖',
-                        description: '1921年7月，中共一大在上海召开，后转移至嘉兴南湖的一艘红船上继续召开。',
-                        significance: '中国共产党成立的地方，中国共产党的诞生地。',
-                        unlocked: false
-                    },
-                    jinggangshan: {
-                        id: 'jinggangshan',
-                        name: '井冈山',
-                        description: '1927年10月，毛泽东率领秋收起义部队到达井冈山，创建了中国第一个农村革命根据地。',
-                        significance: '中国革命的摇篮，开辟了"农村包围城市"的道路。',
-                        unlocked: false
-                    },
-                    zunyi: {
-                        id: 'zunyi',
-                        name: '遵义',
-                        description: '1935年1月，中共中央在遵义召开政治局扩大会议，确立了毛泽东在党中央和红军的领导地位。',
-                        significance: '挽救了党、挽救了红军、挽救了中国革命，是党的历史上一个生死攸关的转折点。',
-                        unlocked: false
-                    },
-                    'yan\'an': {
-                        id: 'yan\'an',
-                        name: '延安',
-                        description: '1935年10月，中央红军到达陕北，延安成为党中央的所在地，长达13年。',
-                        significance: '中国革命的指导中心和战略总后方，培育了伟大的延安精神。',
-                        unlocked: false
-                    },
-                    xibaipo: {
-                        id: 'xibaipo',
-                        name: '西柏坡',
-                        description: '1948年5月至1949年3月，中共中央在西柏坡指挥了辽沈、淮海、平津三大战役。',
-                        significance: '解放全中国的最后一个农村指挥所，"两个务必"的诞生地。',
-                        unlocked: false
+        // Initialize Animations
+        function initAnimations() {
+            const animateElements = document.querySelectorAll('.animate-in');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
                     }
                 });
+            }, { threshold: 0.2 });
 
-                const currentMeetingDetail = ref(null);
-                const pressProgress = ref(0);
-                const pressTimer = ref(null);
+            animateElements.forEach(el => observer.observe(el));
 
-                // 第二章：知识问答
-                const questionList = ref([
-                    {
-                        question: '中国共产党是什么时候成立的？',
-                        options: ['1919年', '1920年', '1921年', '1922年'],
-                        correct: 2,
-                        explanation: '1921年7月，中国共产党第一次全国代表大会在上海召开，标志着中国共产党正式成立。'
-                    },
-                    {
-                        question: '井冈山革命根据地是中国革命的哪个地方？',
-                        options: ['发源地', '摇篮', '终点', '中心'],
-                        correct: 1,
-                        explanation: '井冈山是中国革命的摇篮，开辟了"农村包围城市、武装夺取政权"的道路。'
-                    },
-                    {
-                        question: '遵义会议的历史意义是什么？',
-                        options: ['宣告红军成立', '确立了毛泽东领导地位', '决定长征', '建立新中国'],
-                        correct: 1,
-                        explanation: '遵义会议确立了毛泽东在党中央和红军的领导地位，挽救了党、挽救了红军、挽救了中国革命。'
-                    },
-                    {
-                        question: '延安精神的核心是什么？',
-                        options: ['自力更生、艰苦奋斗', '团结互助', '英勇无畏', '无私奉献'],
-                        correct: 0,
-                        explanation: '延安精神的核心是自力更生、艰苦奋斗，全心全意为人民服务。'
-                    },
-                    {
-                        question: '"两个务必"是在哪里提出的？',
-                        options: ['延安', '西柏坡', '遵义', '井冈山'],
-                        correct: 1,
-                        explanation: '1949年3月，党的七届二中全会在西柏坡召开，毛泽东提出了"两个务必"的要求。'
-                    }
-                ]);
+            // Trigger timeline animations
+            const timelineItems = document.querySelectorAll('.timeline-item');
+            timelineItems.forEach((item, index) => {
+                setTimeout(() => {
+                    item.classList.add('visible');
+                }, 500 + index * 200);
+            });
+        }
 
-                const currentQuestionIndex = ref(0);
-                const selectedOption = ref(null);
-                const questionAnswered = ref(false);
+        // Slide Navigation
+        function goToSlide(index) {
+            if (isAnimating || index === currentSlide) return;
+            isAnimating = true;
 
-                // 计算属性
-                const currentQuestion = computed(() => {
-                    return questionList.value[currentQuestionIndex.value] || null;
+            const wrapper = document.getElementById('swiperWrapper');
+            wrapper.style.transform = `translateX(-${index * 100}%)`;
+
+            currentSlide = index;
+            updateNavigation();
+
+            // Trigger slide-specific animations
+            setTimeout(() => {
+                isAnimating = false;
+                triggerSlideAnimations(index);
+            }, 800);
+        }
+
+        function updateNavigation() {
+            const dots = document.querySelectorAll('.nav-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentSlide);
+            });
+        }
+
+        function triggerSlideAnimations(index) {
+            if (index === 6) {
+                // Animate stats on complete page
+                const statNumbers = document.querySelectorAll('.stat-number');
+                statNumbers.forEach(stat => {
+                    const target = parseInt(stat.dataset.target);
+                    animateNumber(stat, 0, target, 2000);
                 });
-
-                const unlockedCount = computed(() => {
-                    return Object.values(meetingItems.value).filter(item => item.unlocked).length;
-                });
-
-                const certificateNumber = ref('');
-                const currentDate = ref('');
-                const certificateRef = ref(null);
-
-                // 方法
-                const startJourney = () => {
-                    currentChapter.value = 1;
-                    gsap.from('.chapter-enter-active', {
-                        opacity: 0,
-                        y: 50,
-                        duration: 0.8
-                    });
-                };
-
-                const nextChapter = () => {
-                    completedChapters.value.push(currentChapter.value);
-                    currentChapter.value++;
-                    gsap.from('.chapter-enter-active', {
-                        opacity: 0,
-                        y: 50,
-                        duration: 0.8
-                    });
-                };
-
-                const scrollToChapter = (chapter) => {
-                    currentChapter.value = chapter;
-                };
-
-                const showMarkerDetail = (itemId) => {
-                    currentMeetingDetail.value = meetingItems.value[itemId];
-                };
-
-                const handleLongPressStart = (itemId) => {
-                    if (meetingItems.value[itemId].unlocked) return;
-
-                    pressProgress.value = 0;
-                    const interval = 100;
-                    const duration = 3000;
-                    const increment = (interval / duration) * 100;
-
-                    pressTimer.value = setInterval(() => {
-                        pressProgress.value += increment;
-                        if (pressProgress.value >= 100) {
-                            clearInterval(pressTimer.value);
-                            unlockMeetingItem(itemId);
-                        }
-                    }, interval);
-                };
-
-                const handleLongPressEnd = () => {
-                    if (pressTimer.value) {
-                        clearInterval(pressTimer.value);
-                        pressProgress.value = 0;
-                    }
-                };
-
-                const unlockMeetingItem = (itemId) => {
-                    meetingItems.value[itemId].unlocked = true;
-                    pressProgress.value = 0;
-                    honorCount.value++;
-
-                    // 提交到数据库（如果配置了）
-                    // submitHonorToDatabase(`解锁了${meetingItems.value[itemId].name}红色足迹`);
-                };
-
-                const selectOption = (index) => {
-                    if (questionAnswered.value) return;
-                    selectedOption.value = index;
-                    questionAnswered.value = true;
-
-                    if (index === currentQuestion.value.correct) {
-                        score.value++;
-                    }
-                };
-
-                const nextQuestion = () => {
-                    if (currentQuestionIndex.value < questionList.value.length - 1) {
-                        currentQuestionIndex.value++;
-                        selectedOption.value = null;
-                        questionAnswered.value = false;
-                    } else {
-                        // 完成所有题目
-                        generateCertificate();
-                    }
-                };
-
-                const submitHonor = () => {
-                    if (!honorText.value.trim()) return;
-
-                    const newHonor = {
-                        id: Date.now(),
-                        content: honorText.value,
-                        created_at: new Date().toISOString()
-                    };
-
-                    honorList.value.unshift(newHonor);
-                    honorCount.value++;
-                    hasSubmittedHonor.value = true;
-                    honorText.value = '';
-
-                    // 提交到数据库（如果配置了）
-                    // submitHonorToDatabase(newHonor.content);
-                };
-
-                const takeOath = () => {
-                    hasTakenOath.value = true;
-                    oathCount.value++;
-
-                    // 提交到数据库（如果配置了）
-                    // submitOathToDatabase();
-                };
-
-                const formatTime = (dateString) => {
-                    const date = new Date(dateString);
-                    const now = new Date();
-                    const diff = now - date;
-                    const minutes = Math.floor(diff / 60000);
-                    const hours = Math.floor(minutes / 60);
-                    const days = Math.floor(hours / 24);
-
-                    if (days > 0) return `${days}天前`;
-                    if (hours > 0) return `${hours}小时前`;
-                    if (minutes > 0) return `${minutes}分钟前`;
-                    return '刚刚';
-                };
-
-                const generateCertificate = () => {
-                    const timestamp = Date.now().toString(36).toUpperCase();
-                    certificateNumber.value = `RH-${timestamp}`;
-                    currentDate.value = new Date().toLocaleDateString('zh-CN');
-                };
-
-                const downloadCertificate = async () => {
-                    if (!certificateRef.value) return;
-
-                    try {
-                        const canvas = await html2canvas(certificateRef.value, {
-                            backgroundColor: '#fef3c7',
-                            scale: 2
-                        });
-
-                        const link = document.createElement('a');
-                        link.download = `红色传承证书-${certificateNumber.value}.png`;
-                        link.href = canvas.toDataURL('image/png');
-                        link.click();
-                    } catch (error) {
-                        console.error('下载失败:', error);
-                        alert('下载失败，请截图保存');
-                    }
-                };
-
-                const shareCertificate = async () => {
-                    if (navigator.share) {
-                        try {
-                            await navigator.share({
-                                title: '我的红色传承证书',
-                                text: `我完成了"红色足迹闯关"活动，获得了荣誉证书！编号：${certificateNumber.value}`,
-                                url: window.location.href
-                            });
-                        } catch (error) {
-                            console.log('分享取消');
-                        }
-                    } else {
-                        // 复制链接
-                        navigator.clipboard.writeText(window.location.href);
-                        alert('链接已复制到剪贴板！');
-                    }
-                };
-
-                const shareResult = async () => {
-                    const shareText = `我完成了"红色传承·红色足迹闯关"活动！\n知识得分：${score.value}分\n解锁足迹：5个\n参与致敬，庄严宣誓\n传承红色基因，赓续红色血脉！`;
-
-                    if (navigator.share) {
-                        try {
-                            await navigator.share({
-                                title: '红色传承挑战完成',
-                                text: shareText,
-                                url: window.location.href
-                            });
-                        } catch (error) {
-                            console.log('分享取消');
-                        }
-                    } else {
-                        navigator.clipboard.writeText(shareText);
-                        alert('成果已复制到剪贴板！');
-                    }
-                };
-
-                // 初始化
-                onMounted(() => {
-                    generateCertificate();
-
-                    // 模拟加载一些留言数据
-                    honorList.value = [
-                        { id: 1, content: '向革命先烈致敬！传承红色精神！', created_at: new Date(Date.now() - 3600000).toISOString() },
-                        { id: 2, content: '铭记历史，不忘初心！', created_at: new Date(Date.now() - 7200000).toISOString() },
-                        { id: 3, content: '红色基因代代传！', created_at: new Date(Date.now() - 10800000).toISOString() }
-                    ];
-
-                    // 从数据库加载数据（如果配置了）
-                    // loadHonorsFromDatabase();
-                });
-
-                return {
-                    currentChapter,
-                    completedChapters,
-                    honorCount,
-                    oathCount,
-                    honorText,
-                    hasSubmittedHonor,
-                    hasTakenOath,
-                    honorList,
-                    score,
-                    meetingItems,
-                    currentMeetingDetail,
-                    pressProgress,
-                    questionList,
-                    currentQuestionIndex,
-                    currentQuestion,
-                    selectedOption,
-                    questionAnswered,
-                    unlockedCount,
-                    certificateNumber,
-                    currentDate,
-                    certificateRef,
-                    startJourney,
-                    nextChapter,
-                    scrollToChapter,
-                    showMarkerDetail,
-                    handleLongPressStart,
-                    handleLongPressEnd,
-                    selectOption,
-                    nextQuestion,
-                    submitHonor,
-                    takeOath,
-                    formatTime,
-                    downloadCertificate,
-                    shareCertificate,
-                    shareResult
-                };
             }
-        }).mount('#app');
+        }
+
+        function animateNumber(element, start, end, duration) {
+            const range = end - start;
+            const increment = range / (duration / 16);
+            let current = start;
+
+            const timer = setInterval(() => {
+                current += increment;
+                if (current >= end) {
+                    element.textContent = end;
+                    clearInterval(timer);
+                } else {
+                    element.textContent = Math.floor(current);
+                }
+            }, 16);
+        }
+
+        // Touch/Swipe Support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
+        });
+
+        document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const diff = touchStartX - touchEndX;
+            if (Math.abs(diff) > 50) {
+                if (diff > 0 && currentSlide < totalSlides - 1) {
+                    goToSlide(currentSlide + 1);
+                } else if (diff < 0 && currentSlide > 0) {
+                    goToSlide(currentSlide - 1);
+                }
+            }
+        }
+
+        // Keyboard Navigation
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight' && currentSlide < totalSlides - 1) {
+                goToSlide(currentSlide + 1);
+            } else if (e.key === 'ArrowLeft' && currentSlide > 0) {
+                goToSlide(currentSlide - 1);
+            }
+        });
+
+        // Security Detail
+        function showSecurityDetail(title, text) {
+            const detail = document.getElementById('securityDetail');
+            const titleEl = document.getElementById('detailTitle');
+            const textEl = document.getElementById('detailText');
+
+            // Update active card
+            document.querySelectorAll('.security-card').forEach(card => {
+                card.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+
+            // Show detail
+            titleEl.textContent = title;
+            textEl.textContent = text;
+            detail.classList.add('show');
+        }
+
+        // Carousel
+        function goToCarouselSlide(index) {
+            carouselIndex = index;
+            const track = document.getElementById('carouselTrack');
+            track.style.transform = `translateX(-${index * 100}%)`;
+
+            // Update dots
+            document.querySelectorAll('.carousel-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+        }
+
+        // Auto-advance carousel
+        setInterval(() => {
+            if (currentSlide === 3) {
+                carouselIndex = (carouselIndex + 1) % 3;
+                goToCarouselSlide(carouselIndex);
+            }
+        }, 5000);
+
+        // Pledge
+        function makePledge() {
+            const btn = document.getElementById('pledgeBtn');
+            btn.textContent = '已承诺';
+            btn.classList.add('success');
+
+            // Create celebration effect
+            createCelebration();
+
+            setTimeout(() => {
+                goToSlide(6);
+            }, 1500);
+        }
+
+        function createCelebration() {
+            const colors = ['#c41e3a', '#ffd700', '#ff6b6b', '#4ade80'];
+            for (let i = 0; i < 50; i++) {
+                const particle = document.createElement('div');
+                particle.style.cssText = `
+                    position: fixed;
+                    width: 10px;
+                    height: 10px;
+                    background: ${colors[Math.floor(Math.random() * colors.length)]};
+                    border-radius: 50%;
+                    pointer-events: none;
+                    z-index: 9999;
+                    left: ${Math.random() * 100}%;
+                    top: ${Math.random() * 100}%;
+                    animation: celebrate 1s ease-out forwards;
+                `;
+                document.body.appendChild(particle);
+                setTimeout(() => particle.remove(), 1000);
+            }
+
+            // Add animation style
+            if (!document.getElementById('celebrationStyle')) {
+                const style = document.createElement('style');
+                style.id = 'celebrationStyle';
+                style.textContent = `
+                    @keyframes celebrate {
+                        to {
+                            transform: translate(${Math.random() * 200 - 100}px, ${Math.random() * 200 - 100}px);
+                            opacity: 0;
+                        }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        // Share
+        function shareContent() {
+            if (navigator.share) {
+                navigator.share({
+                    title: '国安在我心，青春共守护',
+                    text: '一起来学习国家安全知识，共同守护国家安全！',
+                    url: window.location.href
+                });
+            } else {
+                // Fallback - copy to clipboard
+                navigator.clipboard.writeText(window.location.href);
+                alert('链接已复制到剪贴板！');
+            }
+        }
+
+        // Audio Toggle (placeholder)
+        function toggleAudio() {
+            isPlaying = !isPlaying;
+            const btn = document.getElementById('audioBtn');
+            btn.classList.toggle('playing', isPlaying);
+
+            if (isPlaying && !audioContext) {
+                // Initialize audio context if needed
+                // This is a placeholder - actual audio implementation would go here
+            }
+        }
+
+        // Particle Background
+        const canvas = document.getElementById('particleCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 1;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5 + 0.2;
+                this.color = Math.random() > 0.5 ? '#c41e3a' : '#ffd700';
+            }
+
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+
+                if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.globalAlpha = this.opacity;
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function initParticles() {
+            resizeCanvas();
+            for (let i = 0; i < 50; i++) {
+                particles.push(new Particle());
+            }
+            animateParticles();
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(particle => {
+                particle.update();
+                particle.draw();
+            });
+            requestAnimationFrame(animateParticles);
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        initParticles();
+
+        // Mouse parallax effect on hero shield
+        document.addEventListener('mousemove', e => {
+            if (currentSlide === 0) {
+                const shield = document.querySelector('.shield-3d');
+                const x = (e.clientX / window.innerWidth - 0.5) * 20;
+                const y = (e.clientY / window.innerHeight - 0.5) * 20;
+                shield.style.transform = `rotateY(${x}deg) rotateX(${-y}deg)`;
+            }
+        });
+
+        // Initialize
+        updateNavigation();
     </script>
 </body>
 </html>
